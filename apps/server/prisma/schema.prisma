@@ -1,0 +1,56 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  name      String   @default("")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("users")
+}
+
+model UserProvider {
+  id       String @id @default(uuid())
+  userId   String @map("user_id")
+  provider String
+  apiKey   String @map("api_key")
+  settings String @default("{}")
+
+  @@map("user_providers")
+}
+
+model UsageRecord {
+  id               String   @id @default(uuid())
+  userId           String   @map("user_id")
+  providerId       String   @map("provider_id")
+  modelId          String   @map("model_id")
+  timestamp        DateTime @default(now())
+  promptTokens     Int      @default(0) @map("prompt_tokens")
+  completionTokens Int      @default(0) @map("completion_tokens")
+  cacheHitTokens   Int      @default(0) @map("cache_hit_tokens")
+  cost             Float    @default(0)
+  cliTool          String   @map("cli_tool")
+
+  @@index([userId, timestamp])
+  @@map("usage_records")
+}
+
+model SyncLog {
+  id        String    @id @default(uuid())
+  userId    String    @map("user_id")
+  tableName String    @map("table_name")
+  recordId  String    @map("record_id")
+  action    String
+  syncedAt  DateTime  @default(now()) @map("synced_at")
+
+  @@map("sync_log")
+}
