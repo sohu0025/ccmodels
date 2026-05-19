@@ -10,8 +10,8 @@ export function Sidebar() {
   return (
     <aside className="sidebar flex flex-col py-4">
       <div className="px-4 py-3 mb-4">
-        <h1 className="text-lg font-bold">⚡ CC Switch</h1>
-        <p className="text-xs opacity-60">AI CLI 管理工具</p>
+        <h1 className="text-lg font-bold">{'⚡'} CC Switch</h1>
+        <p className="text-xs text-text-secondary">AI CLI 管理工具</p>
       </div>
       <nav className="flex-1">
         {navItems.map((item) => (
@@ -28,8 +28,8 @@ export function Sidebar() {
           </NavLink>
         ))}
       </nav>
-      <div className="px-4 py-3 border-t" style={{ borderColor: 'var(--color-border)' }}>
-        <p className="text-xs opacity-60">v0.1.0</p>
+      <div className="px-4 py-3 border-t border-border">
+        <p className="text-xs text-text-secondary">v0.1.0</p>
       </div>
     </aside>
   );
