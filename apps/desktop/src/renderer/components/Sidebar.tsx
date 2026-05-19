@@ -2,6 +2,7 @@ import { NavLink } from 'react-router-dom';
 
 const navItems = [
   { to: '/', label: '仪表盘', icon: '📊' },
+  { to: '/usage', label: '用量成本', icon: '💰' },
   { to: '/providers', label: '供应商', icon: '🔌' },
   { to: '/settings', label: '设置', icon: '⚙️' },
 ];
