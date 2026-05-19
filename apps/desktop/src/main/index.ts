@@ -2,6 +2,7 @@ import { app, BrowserWindow } from 'electron';
 import { createMainWindow } from './window';
 import { registerIpcHandlers } from './ipc-handlers';
 import { initDatabase, closeDatabase } from './database';
+import { startProxy } from './proxy';
 
 let mainWindow: BrowserWindow | null = null;
 
@@ -13,6 +14,7 @@ async function bootstrap() {
   await app.whenReady();
   mainWindow = createMainWindow();
   initDatabase();
+  startProxy();
   registerIpcHandlers(mainWindow);
 }
 

@@ -2,6 +2,7 @@ import { ipcMain, BrowserWindow } from 'electron';
 import * as providerDb from './database/providers';
 import * as settingDb from './database/settings';
 import { PRESET_PROVIDERS } from '@ccswitch/shared';
+import { getProxyStatus } from './proxy';
 
 export function registerIpcHandlers(_mainWindow: BrowserWindow): void {
   // ── Provider handlers (real database) ──
@@ -24,8 +25,8 @@ export function registerIpcHandlers(_mainWindow: BrowserWindow): void {
 
   ipcMain.handle('settings:update', (_e, data) => settingDb.updateSettings(data));
 
-  // ── Proxy handlers (stub — Task 6) ──
-  ipcMain.handle('proxy:status', () => ({ running: false, port: 15721, requests: 0 }));
+  // ── Proxy handlers ──
+  ipcMain.handle('proxy:status', () => getProxyStatus());
 
   // ── Config manager handlers (stub — Task 7) ──
   ipcMain.handle('config:scan', () => []);
