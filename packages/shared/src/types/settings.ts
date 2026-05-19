@@ -10,4 +10,7 @@ export interface AppSettings {
   autoConfigCli: boolean;
   syncEnabled: boolean;
   syncInterval: number;
+  monthlyBudgetLimit: number;
+  budgetNotifyThreshold: number;
+  speedTestInterval: number;
 }

@@ -4,6 +4,8 @@ import type { AppSettings } from './settings';
 export * from './provider';
 export * from './model';
 export * from './settings';
+export * from './session';
+export * from './usage';
 
 export interface IPCChannels {
   'provider:list': { args: void; result: Provider[] };

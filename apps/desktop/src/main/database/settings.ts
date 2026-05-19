@@ -17,6 +17,9 @@ export function getSettings(): AppSettings {
     autoConfigCli: map.autoConfigCli !== 'false',
     syncEnabled: map.syncEnabled === 'true',
     syncInterval: parseInt(map.syncInterval ?? '60', 10),
+    monthlyBudgetLimit: parseFloat(map.monthlyBudgetLimit ?? '50'),
+    budgetNotifyThreshold: parseInt(map.budgetNotifyThreshold ?? '80', 10),
+    speedTestInterval: parseInt(map.speedTestInterval ?? '30', 10),
   };
 }
 

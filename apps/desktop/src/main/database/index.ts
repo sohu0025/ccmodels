@@ -47,6 +47,63 @@ export function initDatabase(): void {
       session_id TEXT,
       FOREIGN KEY (provider_id) REFERENCES providers(id) ON DELETE CASCADE
     );
+
+    CREATE TABLE IF NOT EXISTS sessions (
+      id TEXT PRIMARY KEY,
+      cli_tool TEXT NOT NULL,
+      provider_id TEXT NOT NULL,
+      provider_name TEXT NOT NULL DEFAULT '',
+      model_id TEXT NOT NULL,
+      started_at TEXT NOT NULL DEFAULT (datetime('now')),
+      ended_at TEXT,
+      message_count INTEGER NOT NULL DEFAULT 0,
+      total_tokens INTEGER NOT NULL DEFAULT 0,
+      total_cost REAL NOT NULL DEFAULT 0,
+      summary TEXT NOT NULL DEFAULT '',
+      FOREIGN KEY (provider_id) REFERENCES providers(id) ON DELETE SET NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS session_messages (
+      id TEXT PRIMARY KEY,
+      session_id TEXT NOT NULL,
+      role TEXT NOT NULL CHECK(role IN ('user','assistant','system')),
+      content TEXT NOT NULL DEFAULT '',
+      tokens INTEGER NOT NULL DEFAULT 0,
+      timestamp TEXT NOT NULL DEFAULT (datetime('now')),
+      metadata TEXT NOT NULL DEFAULT '{}',
+      FOREIGN KEY (session_id) REFERENCES sessions(id) ON DELETE CASCADE
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_session_messages_session ON session_messages(session_id);
+    CREATE INDEX IF NOT EXISTS idx_sessions_started ON sessions(started_at);
+    CREATE INDEX IF NOT EXISTS idx_usage_timestamp ON usage_records(timestamp);
+    CREATE INDEX IF NOT EXISTS idx_usage_provider ON usage_records(provider_id);
+
+    CREATE TABLE IF NOT EXISTS speed_tests (
+      id TEXT PRIMARY KEY,
+      provider_id TEXT NOT NULL,
+      model_id TEXT NOT NULL DEFAULT '',
+      latency_ms REAL NOT NULL,
+      success INTEGER NOT NULL DEFAULT 1,
+      error_message TEXT DEFAULT '',
+      tested_at TEXT NOT NULL DEFAULT (datetime('now')),
+      FOREIGN KEY (provider_id) REFERENCES providers(id) ON DELETE CASCADE
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_speed_tests_provider ON speed_tests(provider_id, tested_at);
+
+    CREATE TABLE IF NOT EXISTS budget_alerts (
+      id TEXT PRIMARY KEY,
+      month TEXT NOT NULL,
+      total_cost REAL NOT NULL DEFAULT 0,
+      limit_amount REAL NOT NULL DEFAULT 0,
+      threshold_pct INTEGER NOT NULL DEFAULT 80,
+      notified INTEGER NOT NULL DEFAULT 0,
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_budget_month ON budget_alerts(month);
   `);
 
   insertDefaultSettings();
@@ -62,6 +119,9 @@ function insertDefaultSettings(): void {
     autoConfigCli: 'true',
     syncEnabled: 'false',
     syncInterval: '60',
+    monthlyBudgetLimit: '50',
+    budgetNotifyThreshold: '80',
+    speedTestInterval: '30',
   };
 
   const stmt = db.prepare('INSERT OR IGNORE INTO settings (key, value) VALUES (?, ?)');
