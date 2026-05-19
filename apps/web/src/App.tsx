@@ -1,44 +1,44 @@
 import { useState } from 'react';
-import type { Provider, UsageStats } from '@ccswitch/shared';
+import { Layout } from './components/Layout';
+import { Dashboard } from './pages/Dashboard';
+import { Usage } from './pages/Usage';
+import { Sessions } from './pages/Sessions';
+import { SessionDetail } from './pages/SessionDetail';
+import { Settings } from './pages/Settings';
+import { api, setToken } from './api';
 
-const API_BASE = 'http://localhost:3000';
-
-export function App() {
-  const [token, setToken] = useState<string | null>(null);
-  const [data, setData] = useState<any>(null);
+function PageRouter() {
+  const path = window.location.pathname;
+  const [token, setLocalToken] = useState<string | null>(null);
 
   const login = async () => {
-    // Simple token auth — in production, full login flow
-    const res = await fetch(`${API_BASE}/api/auth/token`, {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ userId: 'demo-user' }),
-    });
-    const { token: t } = await res.json();
-    setToken(t);
+    const res = await api.auth.token('demo-user');
+    setToken(res.token);
+    setLocalToken(res.token);
   };
 
-  const sync = async () => {
-    if (!token) return;
-    const res = await fetch(`${API_BASE}/api/sync/push`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-      body: JSON.stringify([{ tableName: 'usage_records', recordId: '1', action: 'INSERT' }]),
-    });
-    setData(await res.json());
-  };
+  if (!token) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold mb-4">CC Switch — Web Dashboard</h1>
+          <button onClick={login} className="px-6 py-3 rounded-lg bg-blue-600 text-white hover:bg-blue-700">Connect to Backend</button>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-white p-8">
-      <h1 className="text-2xl font-bold mb-4">CC Switch — Web Dashboard</h1>
-      {!token ? (
-        <button onClick={login} className="px-4 py-2 rounded bg-blue-600 text-white">Connect</button>
-      ) : (
-        <div>
-          <p className="text-green-600 mb-4">Connected</p>
-          <button onClick={sync} className="px-4 py-2 rounded bg-blue-600 text-white mb-4">Test Sync</button>
-          {data && <pre className="bg-gray-100 p-4 rounded">{JSON.stringify(data, null, 2)}</pre>}
-        </div>
-      )}
-    </div>
+    <Layout>
+      {path === '/' && <Dashboard />}
+      {path === '/usage' && <Usage />}
+      {path === '/sessions' && <Sessions />}
+      {path.startsWith('/sessions/') && <SessionDetail id={path.split('/')[2]} />}
+      {path === '/settings' && <Settings />}
+    </Layout>
   );
+}
+
+export function App() {
+  return <PageRouter />;
 }
