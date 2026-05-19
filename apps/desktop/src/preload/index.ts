@@ -71,7 +71,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // Compare
   listCompareTests: () => ipcRenderer.invoke('compare:list'),
   getCompareTest: (id: string) => ipcRenderer.invoke('compare:get', id),
-  createCompareTest: (prompt: string, models: string[]) => ipcRenderer.invoke('compare:create', prompt, models),
+  runCompareTest: (prompt: string, models: string[]) => ipcRenderer.invoke('compare:run', prompt, models),
   updateCompareResponse: (testId: string, response: any) => ipcRenderer.invoke('compare:updateResponse', testId, response),
 
   // Recommendations

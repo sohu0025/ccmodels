@@ -24,9 +24,9 @@ export function useCompare() {
   const create = async (prompt: string, models: string[]) => {
     try {
       setError(null);
-      const test = await api.createCompareTest(prompt, models);
+      const testId = await api.runCompareTest(prompt, models);
       refresh();
-      return test;
+      return testId;
     } catch (err: any) {
       setError(err.message);
       throw err;

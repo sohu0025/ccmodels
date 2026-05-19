@@ -17,6 +17,7 @@ import * as compareDb from './database/compare-tests';
 import * as recommendDb from './database/recommendations';
 import { startMcpServer, stopMcpServer, getMcpProcessStatus } from './mcp-manager';
 import { triggerSync, getSyncState } from './sync';
+import { runCompareTest } from './compare-runner';
 
 export function registerIpcHandlers(_mainWindow: BrowserWindow): void {
   // ── Provider handlers (real database) ──
@@ -99,7 +100,7 @@ export function registerIpcHandlers(_mainWindow: BrowserWindow): void {
   // ── Compare handlers ──
   ipcMain.handle('compare:list', () => compareDb.getAllCompareTests());
   ipcMain.handle('compare:get', (_e, id) => compareDb.getCompareTestById(id));
-  ipcMain.handle('compare:create', (_e, prompt, models) => compareDb.createCompareTest(prompt, models));
+  ipcMain.handle('compare:run', (_e, prompt: string, models: string[]) => runCompareTest(prompt, models));
   ipcMain.handle('compare:updateResponse', (_e, testId, response) => compareDb.updateCompareResponse(testId, response));
 
   // ── Recommendation handlers ──
