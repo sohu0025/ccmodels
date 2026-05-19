@@ -67,4 +67,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // Sync
   getSyncStatus: () => ipcRenderer.invoke('sync:status'),
   triggerSync: () => ipcRenderer.invoke('sync:trigger'),
+
+  // Compare
+  listCompareTests: () => ipcRenderer.invoke('compare:list'),
+  getCompareTest: (id: string) => ipcRenderer.invoke('compare:get', id),
+  createCompareTest: (prompt: string, models: string[]) => ipcRenderer.invoke('compare:create', prompt, models),
+  updateCompareResponse: (testId: string, response: any) => ipcRenderer.invoke('compare:updateResponse', testId, response),
 });

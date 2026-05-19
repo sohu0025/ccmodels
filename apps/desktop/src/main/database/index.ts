@@ -156,6 +156,24 @@ export function initDatabase(): void {
     );
 
     CREATE INDEX IF NOT EXISTS idx_sync_queue_synced ON sync_queue(synced_at, retry_count);
+
+    CREATE TABLE IF NOT EXISTS compare_tests (
+      id TEXT PRIMARY KEY,
+      prompt TEXT NOT NULL,
+      models TEXT NOT NULL DEFAULT '[]',
+      responses TEXT NOT NULL DEFAULT '[]',
+      status TEXT NOT NULL DEFAULT 'pending' CHECK(status IN ('pending','completed')),
+      created_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+
+    CREATE TABLE IF NOT EXISTS recommendations (
+      id TEXT PRIMARY KEY,
+      task_type TEXT NOT NULL,
+      recommended_model TEXT NOT NULL,
+      reason TEXT NOT NULL DEFAULT '',
+      usage_count INTEGER NOT NULL DEFAULT 0,
+      updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );
   `);
 
   insertDefaultSettings();

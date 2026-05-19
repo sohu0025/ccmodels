@@ -10,6 +10,7 @@ export * from './mcp';
 export * from './skill';
 export * from './prompt';
 export * from './sync';
+export * from './compare';
 
 export interface IPCChannels {
   'provider:list': { args: void; result: Provider[] };

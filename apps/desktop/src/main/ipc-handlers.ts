@@ -13,6 +13,7 @@ import * as mcpDb from './database/mcp';
 import * as skillDb from './database/skills';
 import * as promptDb from './database/prompts';
 import * as syncQueueDb from './database/sync-queue';
+import * as compareDb from './database/compare-tests';
 import { startMcpServer, stopMcpServer, getMcpProcessStatus } from './mcp-manager';
 import { triggerSync, getSyncState } from './sync';
 
@@ -93,6 +94,12 @@ export function registerIpcHandlers(_mainWindow: BrowserWindow): void {
   ipcMain.handle('prompt:update', (_e, id, data) => promptDb.updatePrompt(id, data));
   ipcMain.handle('prompt:delete', (_e, id) => promptDb.deletePrompt(id));
   ipcMain.handle('prompt:setActive', (_e, id, active) => { promptDb.setPromptActive(id, active); });
+
+  // ── Compare handlers ──
+  ipcMain.handle('compare:list', () => compareDb.getAllCompareTests());
+  ipcMain.handle('compare:get', (_e, id) => compareDb.getCompareTestById(id));
+  ipcMain.handle('compare:create', (_e, prompt, models) => compareDb.createCompareTest(prompt, models));
+  ipcMain.handle('compare:updateResponse', (_e, testId, response) => compareDb.updateCompareResponse(testId, response));
 
   // ── Sync handlers ──
   ipcMain.handle('sync:status', () => ({ ...syncQueueDb.getSyncStatus(), ...getSyncState() }));
