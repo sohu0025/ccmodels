@@ -104,6 +104,58 @@ export function initDatabase(): void {
     );
 
     CREATE UNIQUE INDEX IF NOT EXISTS idx_budget_month ON budget_alerts(month);
+
+    CREATE TABLE IF NOT EXISTS mcp_servers (
+      id TEXT PRIMARY KEY,
+      name TEXT NOT NULL,
+      transport TEXT NOT NULL CHECK(transport IN ('stdio','http','sse')),
+      command TEXT,
+      args TEXT DEFAULT '[]',
+      url TEXT,
+      headers TEXT DEFAULT '{}',
+      env_vars TEXT DEFAULT '{}',
+      is_enabled INTEGER NOT NULL DEFAULT 1,
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+
+    CREATE TABLE IF NOT EXISTS skills (
+      id TEXT PRIMARY KEY,
+      name TEXT NOT NULL,
+      version TEXT NOT NULL DEFAULT '0.1.0',
+      description TEXT NOT NULL DEFAULT '',
+      author TEXT NOT NULL DEFAULT '',
+      source_url TEXT NOT NULL,
+      install_path TEXT NOT NULL DEFAULT '',
+      is_active INTEGER NOT NULL DEFAULT 1,
+      config TEXT NOT NULL DEFAULT '{}',
+      installed_at TEXT NOT NULL DEFAULT (datetime('now')),
+      updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+
+    CREATE TABLE IF NOT EXISTS prompts (
+      id TEXT PRIMARY KEY,
+      name TEXT NOT NULL,
+      content TEXT NOT NULL DEFAULT '',
+      target TEXT NOT NULL CHECK(target IN ('claude','gemini','codex','all')),
+      is_active INTEGER NOT NULL DEFAULT 1,
+      tags TEXT NOT NULL DEFAULT '[]',
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+
+    CREATE TABLE IF NOT EXISTS sync_queue (
+      id TEXT PRIMARY KEY,
+      table_name TEXT NOT NULL,
+      record_id TEXT NOT NULL,
+      action TEXT NOT NULL CHECK(action IN ('INSERT','UPDATE','DELETE')),
+      payload TEXT NOT NULL DEFAULT '{}',
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      synced_at TEXT,
+      retry_count INTEGER NOT NULL DEFAULT 0
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_sync_queue_synced ON sync_queue(synced_at, retry_count);
   `);
 
   insertDefaultSettings();
@@ -117,8 +169,11 @@ function insertDefaultSettings(): void {
     lightweightMode: 'false',
     proxyPort: '15721',
     autoConfigCli: 'true',
+    mcpAutoStart: 'true',
     syncEnabled: 'false',
     syncInterval: '60',
+    syncServerUrl: '',
+    syncAuthToken: '',
     monthlyBudgetLimit: '50',
     budgetNotifyThreshold: '80',
     speedTestInterval: '30',

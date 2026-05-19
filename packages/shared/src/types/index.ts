@@ -6,6 +6,10 @@ export * from './model';
 export * from './settings';
 export * from './session';
 export * from './usage';
+export * from './mcp';
+export * from './skill';
+export * from './prompt';
+export * from './sync';
 
 export interface IPCChannels {
   'provider:list': { args: void; result: Provider[] };
