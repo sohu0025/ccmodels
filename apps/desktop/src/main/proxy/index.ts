@@ -1,4 +1,5 @@
 import http from 'node:http';
+import https from 'node:https';
 import { resolveRoute } from './router';
 import { logRequest } from './logger';
 import { getSettings } from '../database/settings';
@@ -14,11 +15,30 @@ export function startProxy(): void {
     requestCount++;
     const startTime = Date.now();
 
-    // Read request body
+    // Read request body (with size limit)
+    const MAX_BODY_SIZE = 10 * 1024 * 1024; // 10 MB
     let body = '';
-    req.on('data', (chunk) => (body += chunk));
+    let bodySize = 0;
+
+    req.on('data', (chunk) => {
+      bodySize += chunk.length;
+      if (bodySize > MAX_BODY_SIZE) {
+        res.writeHead(413, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Request body too large' }));
+        req.destroy();
+        return;
+      }
+      body += chunk;
+    });
     req.on('end', () => {
       handleRequest(req, res, body, startTime);
+    });
+    req.on('error', (err) => {
+      console.error('[CC Switch] Client request error:', err.message);
+      if (!res.headersSent) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Bad request' }));
+      }
     });
   });
 
@@ -63,8 +83,11 @@ function handleRequest(
     // Parse the target URL for http.request
     const targetUrl = new URL(route.targetUrl);
 
+    // Determine transport based on target URL protocol
+    const transport = targetUrl.protocol === 'https:' ? https : http;
+
     // Forward the request
-    const proxyReq = http.request(
+    const proxyReq = transport.request(
       {
         hostname: targetUrl.hostname,
         port: targetUrl.port || (targetUrl.protocol === 'https:' ? 443 : 80),
@@ -74,6 +97,7 @@ function handleRequest(
           ...route.headers,
           host: targetUrl.hostname,
         },
+        rejectUnauthorized: true, // Verify TLS certificates
       },
       (proxyRes) => {
         const latencyMs = Date.now() - startTime;
