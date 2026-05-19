@@ -32,9 +32,13 @@ export function updateCompareResponse(testId: string, response: CompareResponse)
   const test = getCompareTestById(testId);
   if (!test) return;
   test.responses.push(response);
+  const allResponded = test.models.every((m) =>
+    test.responses.some((r) => r.modelId === m)
+  );
+  const status = allResponded ? 'completed' : 'pending';
   getDb().prepare(`
-    UPDATE compare_tests SET responses = ?, status = 'completed' WHERE id = ?
-  `).run(JSON.stringify(test.responses), testId);
+    UPDATE compare_tests SET responses = ?, status = ? WHERE id = ?
+  `).run(JSON.stringify(test.responses), status, testId);
 }
 
 function mapRow(row: CompareTestRow): CompareTest {
