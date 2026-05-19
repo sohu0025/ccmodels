@@ -185,7 +185,7 @@ export class SyncController {
         };
 
         if (action === 'create') {
-          await prisma.speedTest.create({ id: data.id, ...recordData });
+          await prisma.speedTest.create({ data: { id: data.id, ...recordData } });
         } else if (action === 'delete') {
           await prisma.speedTest.deleteMany({ where: { id: data.id, userId } });
         }

@@ -6,6 +6,8 @@
     "dev": "nest start --watch",
     "build": "nest build",
     "start": "node dist/main",
+    "test": "jest --runInBand",
+    "test:watch": "jest --watch",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:push": "prisma db push"
@@ -29,10 +31,14 @@
   },
   "devDependencies": {
     "@nestjs/cli": "^10.4.0",
+    "@nestjs/testing": "^10.4.0",
     "@types/bcryptjs": "^2.4.0",
+    "@types/jest": "^29.5.0",
     "@types/node": "^22.0.0",
     "@types/passport-jwt": "^4.0.0",
+    "jest": "^29.7.0",
     "prisma": "^5.20.0",
+    "ts-jest": "^29.2.0",
     "typescript": "^5.6.0"
   }
 }
