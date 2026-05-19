@@ -54,7 +54,8 @@ export function updateProvider(id: string, data: Partial<ProviderFormData>): Pro
   const name = data.name ?? existing.name;
   const type = data.type ?? existing.type;
   const apiBase = data.apiBase ?? existing.apiBase;
-  const apiKey = data.apiKey !== undefined ? encrypt(data.apiKey) : encrypt(existing.apiKey);
+  const existingRow = getDb().prepare('SELECT api_key FROM providers WHERE id = ?').get(id) as { api_key: string } | undefined;
+  const apiKey = data.apiKey !== undefined ? encrypt(data.apiKey) : (existingRow?.api_key ?? '');
   const cliUrls = data.cliUrls !== undefined ? JSON.stringify(data.cliUrls) : JSON.stringify(existing.cliUrls);
   const headers = data.headers !== undefined ? JSON.stringify(data.headers) : JSON.stringify(existing.headers);
   const models = data.models !== undefined ? JSON.stringify(data.models) : JSON.stringify(existing.models);

@@ -6,6 +6,8 @@ import { DB_FILENAME } from '@ccswitch/shared';
 let db: Database.Database;
 
 export function initDatabase(): void {
+  if (db) return; // Already initialized
+
   const dbPath = path.join(app.getPath('userData'), DB_FILENAME);
   db = new Database(dbPath);
   db.pragma('journal_mode = WAL');
@@ -65,6 +67,13 @@ function insertDefaultSettings(): void {
   const stmt = db.prepare('INSERT OR IGNORE INTO settings (key, value) VALUES (?, ?)');
   for (const [key, value] of Object.entries(defaults)) {
     stmt.run(key, value);
+  }
+}
+
+export function closeDatabase(): void {
+  if (db) {
+    db.close();
+    db = undefined as unknown as Database.Database;
   }
 }
 

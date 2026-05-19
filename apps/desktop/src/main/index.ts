@@ -1,12 +1,18 @@
 import { app, BrowserWindow } from 'electron';
 import { createMainWindow } from './window';
 import { registerIpcHandlers } from './ipc-handlers';
+import { initDatabase, closeDatabase } from './database';
 
 let mainWindow: BrowserWindow | null = null;
+
+app.on('will-quit', () => {
+  closeDatabase();
+});
 
 async function bootstrap() {
   await app.whenReady();
   mainWindow = createMainWindow();
+  initDatabase();
   registerIpcHandlers(mainWindow);
 }
 
