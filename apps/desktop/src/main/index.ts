@@ -5,6 +5,7 @@ import { initDatabase, closeDatabase } from './database';
 import { startProxy } from './proxy';
 import { initConfigManager } from './config-manager';
 import { stopConfigWatcher } from './config-manager/watcher';
+import { initTray } from './tray';
 
 let mainWindow: BrowserWindow | null = null;
 
@@ -19,6 +20,7 @@ async function bootstrap() {
   initDatabase();
   startProxy();
   initConfigManager();
+  initTray(mainWindow);
   registerIpcHandlers(mainWindow);
 }
 
