@@ -8,3 +8,11 @@ dist/
 out/
 release/
 .superpowers/
+.next/
+coverage/
+*.log
+.DS_Store
+Thumbs.db
+build/
+.env.*
+.cache/
