@@ -5,6 +5,7 @@ import { Usage } from './pages/Usage';
 import { Sessions } from './pages/Sessions';
 import { SessionDetail } from './pages/SessionDetail';
 import { Settings } from './pages/Settings';
+import { Compare } from './pages/Compare';
 import { api, setToken } from './api';
 
 function PageRouter() {
@@ -35,6 +36,7 @@ function PageRouter() {
       {path === '/sessions' && <Sessions />}
       {path.startsWith('/sessions/') && <SessionDetail id={path.split('/')[2]} />}
       {path === '/settings' && <Settings />}
+      {path === '/compare' && <Compare />}
     </Layout>
   );
 }
