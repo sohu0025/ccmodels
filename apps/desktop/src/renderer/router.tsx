@@ -11,6 +11,7 @@ import { ProviderDetail } from './pages/ProviderDetail';
 import { Mcp } from './pages/Mcp';
 import { Skills } from './pages/Skills';
 import { Prompts } from './pages/Prompts';
+import { Compare } from './pages/Compare';
 import { Settings } from './pages/Settings';
 
 export function AppRouter() {
@@ -25,6 +26,7 @@ export function AppRouter() {
         <Route path="/mcp" element={<Mcp />} />
         <Route path="/skills" element={<Skills />} />
         <Route path="/prompts" element={<Prompts />} />
+        <Route path="/compare" element={<Compare />} />
         <Route path="/budget" element={<Budget />} />
         <Route path="/providers" element={<Providers />} />
         <Route path="/providers/:id" element={<ProviderDetail />} />

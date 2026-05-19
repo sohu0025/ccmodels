@@ -8,6 +8,7 @@ const navItems = [
   { to: '/mcp', label: 'MCP 管理', icon: '🔧' },
   { to: '/skills', label: 'Skills', icon: '🧩' },
   { to: '/prompts', label: 'Prompts', icon: '📝' },
+  { to: '/compare', label: '模型对比', icon: '⚖️' },
   { to: '/budget', label: '预算告警', icon: '🔔' },
   { to: '/providers', label: '供应商', icon: '🔌' },
   { to: '/settings', label: '设置', icon: '⚙️' },
