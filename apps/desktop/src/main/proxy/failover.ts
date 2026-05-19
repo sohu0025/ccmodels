@@ -5,6 +5,12 @@ interface CircuitBreakerState {
   openSince: number;
 }
 
+export interface CircuitStatus {
+  isOpen: boolean;
+  failures: number;
+  cooldownRemaining: number;
+}
+
 const breakers = new Map<string, CircuitBreakerState>();
 
 const THRESHOLD = 3;       // Consecutive failures before opening
@@ -44,15 +50,16 @@ export function isCircuitOpen(providerId: string): boolean {
   return true;
 }
 
-export function getCircuitStatus(providerId: string): { isOpen: boolean; failures: number; cooldownRemaining: number } {
+export function getCircuitStatus(providerId: string): CircuitStatus {
   const state = breakers.get(providerId);
   if (!state) return { isOpen: false, failures: 0, cooldownRemaining: 0 };
-  const cooldownRemaining = state.isOpen ? Math.max(0, COOLDOWN_MS - (Date.now() - state.openSince)) : 0;
-  return { isOpen: state.isOpen, failures: state.failures, cooldownRemaining };
+  const effectiveOpen = state.isOpen && (Date.now() - state.openSince <= COOLDOWN_MS);
+  const cooldownRemaining = effectiveOpen ? Math.max(0, COOLDOWN_MS - (Date.now() - state.openSince)) : 0;
+  return { isOpen: effectiveOpen, failures: state.failures, cooldownRemaining };
 }
 
-export function getAllCircuitStatuses(): Record<string, { isOpen: boolean; failures: number; cooldownRemaining: number }> {
-  const result: Record<string, any> = {};
+export function getAllCircuitStatuses(): Record<string, CircuitStatus> {
+  const result: Record<string, CircuitStatus> = {};
   for (const providerId of breakers.keys()) {
     result[providerId] = getCircuitStatus(providerId);
   }

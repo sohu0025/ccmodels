@@ -21,9 +21,15 @@ export function resolveRoute(
   let provider = getActiveProvider();
   if (!provider) return null;
 
-  // Check circuit breaker — auto-failover to fallback provider
+  // Check circuit breaker — auto-failover to a healthy fallback provider
   if (isCircuitOpen(provider.id)) {
-    const fallback = getFallbackProvider(provider.id);
+    let fallback: typeof provider | null = null;
+    let currentId = provider.id;
+    while (isCircuitOpen(currentId)) {
+      fallback = getFallbackProvider(currentId);
+      if (!fallback || fallback.id === currentId) { fallback = null; break; }
+      currentId = fallback.id;
+    }
     if (fallback) {
       console.log(`[CC Switch] Failover: ${provider.name} -> ${fallback.name}`);
       provider = fallback;

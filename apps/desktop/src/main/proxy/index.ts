@@ -137,9 +137,9 @@ function handleRequest(
 
           // Record success/failure for circuit breaker
           const statusCode = proxyRes.statusCode ?? 200;
-          if (statusCode >= 500) {
+          if (statusCode >= 500 || statusCode === 429) {
             recordFailure(route.providerId);
-          } else {
+          } else if (statusCode < 400) {
             recordSuccess(route.providerId);
           }
 
