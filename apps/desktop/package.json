@@ -10,11 +10,14 @@
     "build": "npm run build:renderer && npm run build:main",
     "build:renderer": "vite build",
     "build:main": "tsc -p tsconfig.main.json",
+    "pack": "electron-builder --dir",
+    "dist": "electron-builder",
     "lint": "eslint src/"
   },
   "dependencies": {
     "@ccswitch/shared": "workspace:*",
-    "better-sqlite3": "^12.10.0"
+    "better-sqlite3": "^12.10.0",
+    "chokidar": "^5.0.0"
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.0.0",
@@ -23,6 +26,7 @@
     "@types/react-dom": "^18.3.0",
     "@vitejs/plugin-react": "^4.3.0",
     "concurrently": "^9.0.0",
+    "electron-builder": "^25.0.0",
     "electron": "^33.0.0",
     "react": "^18.3.0",
     "react-dom": "^18.3.0",
