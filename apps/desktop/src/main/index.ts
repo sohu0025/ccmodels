@@ -6,10 +6,14 @@ import { startProxy } from './proxy';
 import { initConfigManager } from './config-manager';
 import { stopConfigWatcher } from './config-manager/watcher';
 import { initTray } from './tray';
+import { startSpeedTesting, stopSpeedTesting } from './speed-test';
+import { startBudgetChecking, stopBudgetChecking } from './budget-checker';
 
 let mainWindow: BrowserWindow | null = null;
 
 app.on('will-quit', () => {
+  stopSpeedTesting();
+  stopBudgetChecking();
   stopConfigWatcher();
   closeDatabase();
 });
@@ -21,6 +25,8 @@ async function bootstrap() {
   startProxy();
   initConfigManager();
   initTray(mainWindow);
+  startSpeedTesting();
+  startBudgetChecking();
   registerIpcHandlers(mainWindow);
 }
 
