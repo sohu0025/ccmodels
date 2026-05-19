@@ -10,6 +10,7 @@ import { startSpeedTesting, stopSpeedTesting } from './speed-test';
 import { startBudgetChecking, stopBudgetChecking } from './budget-checker';
 import { startAllMcpServers, stopAllMcpServers } from './mcp-manager';
 import { startSyncDaemon, stopSyncDaemon } from './sync';
+import { initAutoUpdater } from './updater';
 
 let mainWindow: BrowserWindow | null = null;
 
@@ -30,6 +31,7 @@ async function bootstrap() {
   initConfigManager();
   initTray(mainWindow);
   registerIpcHandlers(mainWindow);
+  if (mainWindow) initAutoUpdater(mainWindow);
   startAllMcpServers();
   startSyncDaemon();
   startSpeedTesting();
