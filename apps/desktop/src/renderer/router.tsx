@@ -8,6 +8,9 @@ import { SpeedTest } from './pages/SpeedTest';
 import { Budget } from './pages/Budget';
 import { Providers } from './pages/Providers';
 import { ProviderDetail } from './pages/ProviderDetail';
+import { Mcp } from './pages/Mcp';
+import { Skills } from './pages/Skills';
+import { Prompts } from './pages/Prompts';
 import { Settings } from './pages/Settings';
 
 export function AppRouter() {
@@ -19,6 +22,9 @@ export function AppRouter() {
         <Route path="/sessions" element={<Sessions />} />
         <Route path="/sessions/:id" element={<SessionDetail />} />
         <Route path="/speed-test" element={<SpeedTest />} />
+        <Route path="/mcp" element={<Mcp />} />
+        <Route path="/skills" element={<Skills />} />
+        <Route path="/prompts" element={<Prompts />} />
         <Route path="/budget" element={<Budget />} />
         <Route path="/providers" element={<Providers />} />
         <Route path="/providers/:id" element={<ProviderDetail />} />
