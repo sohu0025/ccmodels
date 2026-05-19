@@ -1,22 +1,53 @@
+interface SidebarProps {
+  onLogout?: () => void;
+}
+
 const navItems = [
-  { to: '/', label: 'Dashboard', icon: '📊' },
-  { to: '/usage', label: 'Usage & Cost', icon: '💰' },
-  { to: '/sessions', label: 'Sessions', icon: '💬' },
-  { to: '/compare', label: 'Compare', icon: '⚖️' },
-  { to: '/settings', label: 'Settings', icon: '⚙️' },
+  { to: '/', label: '仪表盘', icon: '◉' },
+  { to: '/usage', label: '用量成本', icon: '◎' },
+  { to: '/sessions', label: '会话历史', icon: '◈' },
+  { to: '/compare', label: '模型对比', icon: '⚖' },
+  { to: '/settings', label: '设置', icon: '⚙' },
 ];
 
-export function Sidebar() {
+export function Sidebar({ onLogout }: SidebarProps) {
   const path = window.location.pathname;
   return (
-    <nav className="w-56 bg-white border-r border-gray-200 p-4 flex flex-col gap-1">
-      <h1 className="text-lg font-bold mb-6 px-3">CC Switch</h1>
-      {navItems.map((item) => (
-        <a key={item.to} href={item.to}
-          className={`px-3 py-2 rounded-lg text-sm ${path === item.to ? 'bg-blue-50 text-blue-600 font-medium' : 'text-gray-600 hover:bg-gray-50'}`}>
-          {item.icon} {item.label}
-        </a>
-      ))}
-    </nav>
+    <aside className="sidebar">
+      <div className="px-5 py-6">
+        <div className="flex items-center gap-2.5">
+          <div className="w-7 h-7 rounded-lg bg-accent flex items-center justify-center">
+            <span className="text-white text-sm font-bold">⚡</span>
+          </div>
+          <div>
+            <h1 className="text-sm font-semibold text-text-primary">CC Switch</h1>
+            <p className="text-xs text-text-tertiary leading-none">Web Dashboard</p>
+          </div>
+        </div>
+      </div>
+
+      <div className="sidebar-title">导航</div>
+      <nav className="flex-1">
+        {navItems.map((item) => (
+          <a
+            key={item.to}
+            href={item.to}
+            className={`sidebar-item ${path === item.to ? 'active' : ''}`}
+          >
+            <span className="text-sm w-4 text-center">{item.icon}</span>
+            <span>{item.label}</span>
+          </a>
+        ))}
+      </nav>
+
+      {onLogout && (
+        <div className="px-5 py-4 border-t border-border">
+          <button onClick={onLogout} className="sidebar-item text-danger">
+            <span className="text-sm w-4 text-center">⏻</span>
+            <span>退出登录</span>
+          </button>
+        </div>
+      )}
+    </aside>
   );
 }

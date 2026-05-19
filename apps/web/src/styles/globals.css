@@ -1,1 +1,127 @@
 @import "tailwindcss";
+
+:root {
+  --color-bg-primary: #f5f5f7;
+  --color-bg-secondary: #f0f0f2;
+  --color-bg-card: rgba(255, 255, 255, 0.8);
+  --color-bg-tertiary: rgba(0, 0, 0, 0.04);
+  --color-text-primary: #1d1d1f;
+  --color-text-secondary: #86868b;
+  --color-text-tertiary: #b0b0b5;
+  --color-border: rgba(0, 0, 0, 0.06);
+  --color-accent: #0071e3;
+  --color-accent-hover: #0077ed;
+  --color-success: #34c759;
+  --color-warning: #ff9500;
+  --color-danger: #ff3b30;
+}
+
+.dark {
+  --color-bg-primary: #1d1d1f;
+  --color-bg-secondary: #2c2c2e;
+  --color-bg-card: rgba(44, 44, 46, 0.8);
+  --color-bg-tertiary: rgba(255, 255, 255, 0.06);
+  --color-text-primary: #f5f5f7;
+  --color-text-secondary: #86868b;
+  --color-text-tertiary: #5a5a5e;
+  --color-border: rgba(255, 255, 255, 0.08);
+  --color-accent: #0a84ff;
+  --color-accent-hover: #409cff;
+  --color-success: #30d158;
+  --color-warning: #ff9f0a;
+  --color-danger: #ff453a;
+}
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Inter', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: var(--color-bg-primary);
+  color: var(--color-text-primary);
+}
+
+.sidebar {
+  width: 240px;
+  background: var(--color-bg-secondary);
+  border-right: 1px solid var(--color-border);
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.sidebar-title {
+  padding: 20px 20px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.sidebar-item {
+  padding: 7px 12px;
+  margin: 1px 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--color-text-primary);
+  border-radius: 6px;
+  text-decoration: none;
+  transition: background-color 0.12s ease;
+}
+
+.sidebar-item:hover {
+  background: var(--color-border);
+}
+
+.sidebar-item.active {
+  background: var(--color-accent);
+  color: white;
+  font-weight: 500;
+}
+
+.card {
+  background: var(--color-bg-card);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.input {
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 13px;
+  color: var(--color-text-primary);
+  transition: border-color 0.12s ease;
+  width: 100%;
+  outline: none;
+}
+
+.input:focus {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.15);
+}
+
+.btn-primary {
+  background: var(--color-accent);
+  color: white;
+  font-weight: 500;
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-size: 13px;
+  transition: background-color 0.12s ease;
+  border: none;
+  cursor: pointer;
+}
+
+.btn-primary:hover {
+  background: var(--color-accent-hover);
+}
