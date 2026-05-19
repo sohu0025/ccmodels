@@ -9,6 +9,7 @@ import { initTray } from './tray';
 import { startSpeedTesting, stopSpeedTesting } from './speed-test';
 import { startBudgetChecking, stopBudgetChecking } from './budget-checker';
 import { startAllMcpServers, stopAllMcpServers } from './mcp-manager';
+import { startSyncDaemon, stopSyncDaemon } from './sync';
 
 let mainWindow: BrowserWindow | null = null;
 
@@ -16,6 +17,7 @@ app.on('will-quit', () => {
   stopSpeedTesting();
   stopBudgetChecking();
   stopAllMcpServers();
+  stopSyncDaemon();
   stopConfigWatcher();
   closeDatabase();
 });
@@ -27,10 +29,11 @@ async function bootstrap() {
   startProxy();
   initConfigManager();
   initTray(mainWindow);
+  registerIpcHandlers(mainWindow);
   startAllMcpServers();
+  startSyncDaemon();
   startSpeedTesting();
   startBudgetChecking();
-  registerIpcHandlers(mainWindow);
 }
 
 app.on('window-all-closed', () => {

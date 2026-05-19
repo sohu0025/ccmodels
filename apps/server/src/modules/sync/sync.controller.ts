@@ -26,4 +26,12 @@ export class SyncController {
     }
     return { success: true, processed: items.length };
   }
+
+  @Post('pull')
+  async pull(@Headers('authorization') auth: string, @Body() body: { tableName: string; lastSyncAt?: string }) {
+    const token = auth?.replace('Bearer ', '');
+    const user = await this.authService.validateToken(token);
+    if (!user) throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
+    return { success: true, items: [] }; // Pull logic TBD per table
+  }
 }
