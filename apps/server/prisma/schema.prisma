@@ -66,3 +66,15 @@ model SyncLog {
 
   @@map("sync_log")
 }
+
+model Recommendation {
+  id               String   @id @default(uuid())
+  userId           String   @map("user_id")
+  taskType         String   @map("task_type")
+  recommendedModel String   @map("recommended_model")
+  reason           String   @default("")
+  usageCount       Int      @default(0) @map("usage_count")
+  updatedAt        DateTime @default(now()) @map("updated_at")
+
+  @@map("recommendations")
+}

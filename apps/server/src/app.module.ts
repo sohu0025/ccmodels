@@ -6,6 +6,7 @@ import { UsageModule } from './modules/usage/usage.module';
 import { SessionModule } from './modules/session/session.module';
 import { ProviderModule } from './modules/provider/provider.module';
 import { CompareModule } from './modules/compare/compare.module';
+import { RecommendationModule } from './modules/recommendation/recommendation.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { CompareModule } from './modules/compare/compare.module';
     SessionModule,
     ProviderModule,
     CompareModule,
+    RecommendationModule,
   ],
 })
 export class AppModule {}
