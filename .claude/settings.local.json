@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "WebSearch",
+      "WebFetch(domain:ccswitch.io)",
+      "Bash(curl -s -L \"https://ccswitch.io/zh/\")",
+      "Bash(curl -s \"https://api.github.com/repos/farion1231/cc-switch\")",
+      "WebFetch(domain:github.com)",
+      "Bash(/c/Users/Administrator/.claude/plugins/cache/claude-plugins-official/superpowers/5.1.0/skills/brainstorming/scripts/start-server.sh *)",
+      "Bash(npm install *)",
+      "Bash(pnpm install *)",
+      "Bash(git add *)",
+      "Bash(git commit *)"
+    ]
+  }
+}
