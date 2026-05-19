@@ -30,9 +30,15 @@ export async function triggerSync(): Promise<{ success: boolean; processed: numb
   return doSync();
 }
 
+export function getSyncState(): { isSyncing: boolean } {
+  return { isSyncing };
+}
+
 async function doSync(): Promise<{ success: boolean; processed: number; message: string }> {
   if (isSyncing) return { success: false, processed: 0, message: 'Already syncing' };
   isSyncing = true;
+
+  let items: SyncQueueItem[] = [];
 
   try {
     const settings = getSettings();
@@ -40,7 +46,7 @@ async function doSync(): Promise<{ success: boolean; processed: number; message:
       return { success: false, processed: 0, message: 'Sync not configured' };
     }
 
-    const items = dequeuePending(50);
+    items = dequeuePending(50);
     if (items.length === 0) return { success: true, processed: 0, message: 'Nothing to sync' };
 
     const res = await fetch(`${settings.syncServerUrl}/api/sync/push`, {
@@ -61,7 +67,7 @@ async function doSync(): Promise<{ success: boolean; processed: number; message:
       throw new Error(`Sync push failed: ${res.status} ${res.statusText}`);
     }
 
-    const result = await res.json();
+    await res.json();
     for (const item of items) {
       markSynced(item.id);
     }
@@ -69,8 +75,6 @@ async function doSync(): Promise<{ success: boolean; processed: number; message:
     return { success: true, processed: items.length, message: 'OK' };
   } catch (err: any) {
     console.error('[CC Switch] Sync failed:', err.message);
-    // Mark all pending items as failed (increments retry_count)
-    const items = dequeuePending(50);
     for (const item of items) {
       markFailed(item.id);
     }

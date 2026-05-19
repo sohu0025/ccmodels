@@ -13,7 +13,7 @@ import * as skillDb from './database/skills';
 import * as promptDb from './database/prompts';
 import * as syncQueueDb from './database/sync-queue';
 import { startMcpServer, stopMcpServer, getMcpProcessStatus } from './mcp-manager';
-import { triggerSync } from './sync';
+import { triggerSync, getSyncState } from './sync';
 
 export function registerIpcHandlers(_mainWindow: BrowserWindow): void {
   // ── Provider handlers (real database) ──
@@ -93,6 +93,6 @@ export function registerIpcHandlers(_mainWindow: BrowserWindow): void {
   ipcMain.handle('prompt:setActive', (_e, id, active) => { promptDb.setPromptActive(id, active); });
 
   // ── Sync handlers ──
-  ipcMain.handle('sync:status', () => syncQueueDb.getSyncStatus());
+  ipcMain.handle('sync:status', () => ({ ...syncQueueDb.getSyncStatus(), ...getSyncState() }));
   ipcMain.handle('sync:trigger', () => triggerSync());
 }
