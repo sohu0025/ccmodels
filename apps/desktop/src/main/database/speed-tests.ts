@@ -1,5 +1,6 @@
 import { getDb } from './index';
 import { randomUUID } from 'node:crypto';
+import { enqueueSync } from './sync-queue';
 
 export interface SpeedTestRecord {
   id: string;
@@ -11,10 +12,19 @@ export interface SpeedTestRecord {
 
 export function recordSpeedTest(providerId: string, latencyMs: number, success: boolean, errorMessage = ''): void {
   const id = randomUUID();
+  const now = new Date().toISOString();
   getDb().prepare(`
     INSERT INTO speed_tests (id, provider_id, latency_ms, success, error_message, tested_at)
-    VALUES (?, ?, ?, ?, ?, datetime('now'))
-  `).run(id, providerId, latencyMs, success ? 1 : 0, errorMessage);
+    VALUES (?, ?, ?, ?, ?, ?)
+  `).run(id, providerId, latencyMs, success ? 1 : 0, errorMessage, now);
+
+  enqueueSync('speed_tests', id, 'create', {
+    id,
+    providerId,
+    latencyMs,
+    success,
+    testedAt: now,
+  });
 }
 
 export function getLatestSpeedTests(limit = 50): SpeedTestRecord[] {

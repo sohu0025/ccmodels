@@ -1,29 +1,21 @@
 import { Controller, Get, Post, Body, Param, Headers, HttpException, HttpStatus } from '@nestjs/common';
+import { AuthService } from '../auth/auth.service';
 import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
-function validateAuth(headers: { authorization?: string }): string | null {
-  const token = headers.authorization?.replace('Bearer ', '');
-  if (!token) return null;
-  try {
-    const decoded = Buffer.from(token.split('.')[1], 'base64').toString();
-    const payload = JSON.parse(decoded);
-    return payload.userId as string;
-  } catch {
-    return null;
-  }
-}
-
 @Controller('api/compare')
 export class CompareController {
+  constructor(private authService: AuthService) {}
+
   @Get()
-  async list(@Headers() headers: Record<string, string>) {
-    const userId = validateAuth(headers);
-    if (!userId) throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
+  async list(@Headers('authorization') auth: string) {
+    const token = auth?.replace('Bearer ', '');
+    const user = await this.authService.validateToken(token);
+    if (!user) throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
 
     const tests = await prisma.compareTest.findMany({
-      where: { userId },
+      where: { userId: user.userId },
       orderBy: { createdAt: 'desc' },
     });
 
@@ -35,11 +27,12 @@ export class CompareController {
   }
 
   @Get(':id')
-  async getById(@Param('id') id: string, @Headers() headers: Record<string, string>) {
-    const userId = validateAuth(headers);
-    if (!userId) throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
+  async getById(@Headers('authorization') auth: string, @Param('id') id: string) {
+    const token = auth?.replace('Bearer ', '');
+    const user = await this.authService.validateToken(token);
+    if (!user) throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
 
-    const test = await prisma.compareTest.findFirst({ where: { userId, id } });
+    const test = await prisma.compareTest.findFirst({ where: { userId: user.userId, id } });
     if (!test) throw new HttpException('Not found', HttpStatus.NOT_FOUND);
 
     return {
@@ -50,13 +43,14 @@ export class CompareController {
   }
 
   @Post()
-  async create(@Headers() headers: Record<string, string>, @Body() body: { prompt: string; models: string[] }) {
-    const userId = validateAuth(headers);
-    if (!userId) throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
+  async create(@Headers('authorization') auth: string, @Body() body: { prompt: string; models: string[] }) {
+    const token = auth?.replace('Bearer ', '');
+    const user = await this.authService.validateToken(token);
+    if (!user) throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
 
     const test = await prisma.compareTest.create({
       data: {
-        userId,
+        userId: user.userId,
         prompt: body.prompt,
         models: JSON.stringify(body.models),
       },
@@ -66,6 +60,52 @@ export class CompareController {
       ...test,
       models: typeof test.models === 'string' ? JSON.parse(test.models) : test.models,
       responses: typeof test.responses === 'string' ? JSON.parse(test.responses) : test.responses,
+    };
+  }
+
+  @Post(':id/responses')
+  async updateResponse(
+    @Headers('authorization') auth: string,
+    @Param('id') id: string,
+    @Body() body: { modelId: string; content?: string; error?: string; latencyMs?: number; tokens?: number; cost?: number },
+  ) {
+    const token = auth?.replace('Bearer ', '');
+    const user = await this.authService.validateToken(token);
+    if (!user) throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
+
+    const test = await prisma.compareTest.findFirst({ where: { userId: user.userId, id } });
+    if (!test) throw new HttpException('Not found', HttpStatus.NOT_FOUND);
+
+    const responses = typeof test.responses === 'string' ? JSON.parse(test.responses) : test.responses;
+    const existing = responses.findIndex((r: any) => r.modelId === body.modelId);
+    const response = {
+      modelId: body.modelId,
+      content: body.content ?? '',
+      error: body.error ?? null,
+      latencyMs: body.latencyMs ?? 0,
+      tokens: body.tokens ?? 0,
+      cost: body.cost ?? 0,
+    };
+
+    if (existing >= 0) {
+      responses[existing] = response;
+    } else {
+      responses.push(response);
+    }
+
+    const status = responses.length >= (typeof test.models === 'string' ? JSON.parse(test.models) : test.models).length
+      ? 'completed'
+      : 'running';
+
+    const updated = await prisma.compareTest.update({
+      where: { id },
+      data: { responses: JSON.stringify(responses), status },
+    });
+
+    return {
+      ...updated,
+      models: typeof updated.models === 'string' ? JSON.parse(updated.models) : updated.models,
+      responses: typeof updated.responses === 'string' ? JSON.parse(updated.responses) : updated.responses,
     };
   }
 }

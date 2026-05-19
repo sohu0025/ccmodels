@@ -1,5 +1,6 @@
 import { getDb } from './index';
-import type { CompareTest } from '@ccswitch/shared';
+import { randomUUID } from 'node:crypto';
+import { enqueueSync } from './sync-queue';
 
 interface RecommendationRow {
   id: string;
@@ -29,16 +30,37 @@ export function getRecommendationsByTaskType(taskType: string): Recommendation[]
 
 export function saveRecommendation(taskType: string, model: string, reason: string): void {
   const existing = getDb().prepare('SELECT * FROM recommendations WHERE task_type = ? AND recommended_model = ?').get(taskType, model) as RecommendationRow | undefined;
+  const now = new Date().toISOString();
+
   if (existing) {
     getDb().prepare(`
-      UPDATE recommendations SET reason = ?, usage_count = usage_count + 1, updated_at = datetime('now')
+      UPDATE recommendations SET reason = ?, usage_count = usage_count + 1, updated_at = ?
       WHERE task_type = ? AND recommended_model = ?
-    `).run(reason, taskType, model);
+    `).run(reason, now, taskType, model);
+
+    enqueueSync('recommendations', existing.id, 'update', {
+      id: existing.id,
+      taskType: existing.task_type,
+      recommendedModel: existing.recommended_model,
+      reason,
+      usageCount: existing.usage_count + 1,
+      updatedAt: now,
+    });
   } else {
+    const id = `rec-${randomUUID()}`;
     getDb().prepare(`
-      INSERT INTO recommendations (id, task_type, recommended_model, reason)
-      VALUES (random(), ?, ?, ?)
-    `).run(taskType, model, reason);
+      INSERT INTO recommendations (id, task_type, recommended_model, reason, usage_count, updated_at)
+      VALUES (?, ?, ?, ?, 0, ?)
+    `).run(id, taskType, model, reason, now);
+
+    enqueueSync('recommendations', id, 'create', {
+      id,
+      taskType,
+      recommendedModel: model,
+      reason,
+      usageCount: 0,
+      updatedAt: now,
+    });
   }
 }
 

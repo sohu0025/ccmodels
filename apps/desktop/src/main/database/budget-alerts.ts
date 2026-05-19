@@ -1,5 +1,6 @@
 import { getDb } from './index';
 import { randomUUID } from 'node:crypto';
+import { enqueueSync } from './sync-queue';
 import { getSettings } from './settings';
 
 export interface BudgetStatus {
@@ -30,6 +31,16 @@ export function getBudgetStatus(): BudgetStatus {
       INSERT INTO budget_alerts (id, month, total_cost, limit_amount, threshold_pct)
       VALUES (?, ?, ?, ?, ?)
     `).run(id, month, totalCost, limitAmount, settings.budgetNotifyThreshold);
+
+    enqueueSync('budget_alerts', id, 'create', {
+      id,
+      month,
+      limitAmount,
+      totalCost,
+      thresholdPct: settings.budgetNotifyThreshold,
+      usagePct: limitAmount > 0 ? (totalCost / limitAmount) * 100 : 0,
+      notified: false,
+    });
   }
 
   return {
@@ -68,4 +79,15 @@ export function markBudgetNotified(): void {
   const now = new Date();
   const month = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
   getDb().prepare("UPDATE budget_alerts SET notified = 1, updated_at = datetime('now') WHERE month = ?").run(month);
+
+  const status = getBudgetStatus();
+  enqueueSync('budget_alerts', `budget-${month}`, 'update', {
+    id: `budget-${month}`,
+    month,
+    limitAmount: status.limitAmount,
+    totalCost: status.totalCost,
+    thresholdPct: status.thresholdPct,
+    usagePct: status.usagePct,
+    notified: true,
+  });
 }

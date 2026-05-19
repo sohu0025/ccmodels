@@ -19,11 +19,17 @@ model User {
 }
 
 model UserProvider {
-  id       String @id @default(uuid())
-  userId   String @map("user_id")
-  provider String
-  apiKey   String @map("api_key")
-  settings String @default("{}")
+  id       String   @id @default(uuid())
+  userId   String   @map("user_id")
+  name     String
+  type     String   @default("custom")
+  apiBase  String   @map("api_base") @default("")
+  models   String   @default("[]")
+  settings String   @default("{}")
+  isActive Int      @default(0) @map("is_active")
+  sort     Int      @default(0)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   @@map("user_providers")
 }
@@ -32,6 +38,7 @@ model UsageRecord {
   id               String   @id @default(uuid())
   userId           String   @map("user_id")
   providerId       String   @map("provider_id")
+  providerName     String   @default("") @map("provider_name")
   modelId          String   @map("model_id")
   timestamp        DateTime @default(now())
   promptTokens     Int      @default(0) @map("prompt_tokens")
@@ -39,15 +46,76 @@ model UsageRecord {
   cacheHitTokens   Int      @default(0) @map("cache_hit_tokens")
   cost             Float    @default(0)
   cliTool          String   @map("cli_tool")
+  sessionId        String?  @map("session_id")
 
   @@index([userId, timestamp])
   @@map("usage_records")
 }
 
+model Session {
+  id            String   @id @default(uuid())
+  userId        String   @map("user_id")
+  cliTool       String   @map("cli_tool")
+  providerId    String   @map("provider_id")
+  providerName  String   @default("") @map("provider_name")
+  modelId       String   @default("") @map("model_id")
+  summary       String   @default("")
+  messageCount  Int      @default(0) @map("message_count")
+  totalTokens   Int      @default(0) @map("total_tokens")
+  totalCost     Float    @default(0) @map("total_cost")
+  startedAt     DateTime @default(now()) @map("started_at")
+  endedAt       DateTime? @map("ended_at")
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  @@index([userId, startedAt])
+  @@map("sessions")
+}
+
+model SessionMessage {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  sessionId String   @map("session_id")
+  role      String
+  content   String   @db.Text
+  tokens    Int      @default(0)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([userId, sessionId])
+  @@map("session_messages")
+}
+
+model SpeedTest {
+  id         String   @id @default(uuid())
+  userId     String   @map("user_id")
+  providerId String   @map("provider_id")
+  latencyMs  Float    @default(0) @map("latency_ms")
+  success    Int      @default(1)
+  testedAt   DateTime @default(now()) @map("tested_at")
+
+  @@index([userId, testedAt])
+  @@map("speed_tests")
+}
+
+model BudgetAlert {
+  id            String   @id @default(uuid())
+  userId        String   @map("user_id")
+  month         String
+  limitAmount   Float    @default(0) @map("limit_amount")
+  totalCost     Float    @default(0) @map("total_cost")
+  thresholdPct  Int      @default(80) @map("threshold_pct")
+  usagePct      Float    @default(0) @map("usage_pct")
+  notified      Int      @default(0)
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  @@unique([userId, month])
+  @@map("budget_alerts")
+}
+
 model CompareTest {
   id        String   @id @default(uuid())
   userId    String   @map("user_id")
-  prompt    String
+  prompt    String   @db.Text
   models    String
   responses String   @default("[]")
   status    String   @default("pending")

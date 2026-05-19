@@ -2,6 +2,17 @@ import { getDb } from './index';
 import { randomUUID } from 'node:crypto';
 import type { SyncQueueItem, SyncAction, SyncStatus } from '@ccswitch/shared';
 
+interface SyncQueueRow {
+  id: string;
+  table_name: string;
+  record_id: string;
+  action: string;
+  payload: string;
+  created_at: string;
+  synced_at: string | null;
+  retry_count: number;
+}
+
 export function enqueueSync(tableName: string, recordId: string, action: SyncAction, data: Record<string, unknown>): void {
   const id = randomUUID();
   getDb().prepare(`
@@ -11,10 +22,11 @@ export function enqueueSync(tableName: string, recordId: string, action: SyncAct
 }
 
 export function dequeuePending(limit = 50): SyncQueueItem[] {
-  return getDb().prepare(`
+  const rows = getDb().prepare(`
     SELECT * FROM sync_queue WHERE synced_at IS NULL AND retry_count < 5
     ORDER BY created_at ASC LIMIT ?
-  `).all(limit).map(mapSyncRow);
+  `).all(limit) as SyncQueueRow[];
+  return rows.map(mapSyncRow);
 }
 
 export function markSynced(id: string): void {
@@ -26,8 +38,8 @@ export function markFailed(id: string): void {
 }
 
 export function getSyncStatus(): SyncStatus {
-  const queueSize = (getDb().prepare("SELECT COUNT(*) as c FROM sync_queue WHERE synced_at IS NULL").get() as any).c;
-  const lastRow = getDb().prepare("SELECT synced_at FROM sync_queue WHERE synced_at IS NOT NULL ORDER BY synced_at DESC LIMIT 1").get() as any;
+  const queueSize = (getDb().prepare("SELECT COUNT(*) as c FROM sync_queue WHERE synced_at IS NULL").get() as { c: number }).c;
+  const lastRow = getDb().prepare("SELECT synced_at FROM sync_queue WHERE synced_at IS NOT NULL ORDER BY synced_at DESC LIMIT 1").get() as { synced_at: string } | undefined;
   return { queueSize, lastSyncAt: lastRow?.synced_at ?? null, lastSyncError: null, isSyncing: false };
 }
 
@@ -35,12 +47,12 @@ export function cleanOldSynced(daysToKeep = 7): void {
   getDb().prepare("DELETE FROM sync_queue WHERE synced_at IS NOT NULL AND synced_at < datetime('now', ?)").run(`-${daysToKeep} days`);
 }
 
-function mapSyncRow(row: any): SyncQueueItem {
+function mapSyncRow(row: SyncQueueRow): SyncQueueItem {
   return {
     id: row.id,
     tableName: row.table_name,
     recordId: row.record_id,
-    action: row.action,
+    action: row.action as SyncQueueItem['action'],
     payload: row.payload,
     createdAt: row.created_at,
     syncedAt: row.synced_at,

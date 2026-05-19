@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { getDb } from './index';
 import { encrypt, decrypt } from '../crypto';
+import { enqueueSync } from './sync-queue';
 import type { Provider, ProviderFormData } from '@ccswitch/shared';
 
 interface ProviderRow {
@@ -44,7 +45,22 @@ export function createProvider(data: ProviderFormData): Provider {
     JSON.stringify(data.cliUrls), JSON.stringify(data.headers),
     JSON.stringify(data.models), now, now,
   );
-  return getProviderById(id)!;
+
+  const provider = getProviderById(id)!;
+  // Sync metadata only — NEVER include apiKey
+  enqueueSync('providers', id, 'create', {
+    id,
+    name: provider.name,
+    type: provider.type,
+    apiBase: provider.apiBase,
+    models: provider.models,
+    isActive: provider.isActive,
+    sort: provider.sort,
+    createdAt: provider.createdAt,
+    updatedAt: provider.updatedAt,
+  });
+
+  return provider;
 }
 
 export function updateProvider(id: string, data: Partial<ProviderFormData>): Provider | null {
@@ -66,11 +82,26 @@ export function updateProvider(id: string, data: Partial<ProviderFormData>): Pro
     WHERE id=?
   `).run(name, type, apiBase, apiKey, cliUrls, headers, models, now, id);
 
-  return getProviderById(id)!;
+  const updated = getProviderById(id)!;
+  // Sync metadata only — NEVER include apiKey
+  enqueueSync('providers', id, 'update', {
+    id,
+    name: updated.name,
+    type: updated.type,
+    apiBase: updated.apiBase,
+    models: updated.models,
+    isActive: updated.isActive,
+    sort: updated.sort,
+    createdAt: updated.createdAt,
+    updatedAt: now,
+  });
+
+  return updated;
 }
 
 export function deleteProvider(id: string): void {
   getDb().prepare('DELETE FROM providers WHERE id = ?').run(id);
+  enqueueSync('providers', id, 'delete', { id });
 }
 
 export function getFallbackProvider(failedProviderId: string): Provider | null {
@@ -84,6 +115,22 @@ export function setActiveProvider(id: string): void {
   const db = getDb();
   db.prepare('UPDATE providers SET is_active = 0').run();
   db.prepare('UPDATE providers SET is_active = 1 WHERE id = ?').run(id);
+
+  // Sync the activated provider
+  const provider = getProviderById(id);
+  if (provider) {
+    enqueueSync('providers', id, 'update', {
+      id,
+      name: provider.name,
+      type: provider.type,
+      apiBase: provider.apiBase,
+      models: provider.models,
+      isActive: true,
+      sort: provider.sort,
+      createdAt: provider.createdAt,
+      updatedAt: new Date().toISOString(),
+    });
+  }
 }
 
 function mapRow(row: ProviderRow): Provider {

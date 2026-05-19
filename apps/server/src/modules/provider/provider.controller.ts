@@ -1,63 +1,61 @@
 import { Controller, Get, Post, Put, Delete, Body, Param, Headers, HttpException, HttpStatus } from '@nestjs/common';
+import { AuthService } from '../auth/auth.service';
 import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
-function validateAuth(headers: { authorization?: string }): string | null {
-  const token = headers.authorization?.replace('Bearer ', '');
-  if (!token) return null;
-  try {
-    const decoded = Buffer.from(token.split('.')[1], 'base64').toString();
-    const payload = JSON.parse(decoded);
-    return payload.userId as string;
-  } catch {
-    return null;
-  }
-}
-
 @Controller('api/providers')
 export class ProviderController {
+  constructor(private authService: AuthService) {}
+
   @Get()
-  async list(@Headers() headers: Record<string, string>) {
-    const userId = validateAuth(headers);
-    if (!userId) throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
+  async list(@Headers('authorization') auth: string) {
+    const token = auth?.replace('Bearer ', '');
+    const user = await this.authService.validateToken(token);
+    if (!user) throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
 
     const providers = await prisma.userProvider.findMany({
-      where: { userId },
-      select: { id: true, provider: true, settings: true },
+      where: { userId: user.userId },
+      orderBy: { sort: 'asc' },
     });
 
     return providers.map(p => ({
       ...p,
-      settings: typeof p.settings === 'string' ? JSON.parse(p.settings) : p.settings,
+      models: typeof p.models === 'string' ? JSON.parse(p.models) : p.models,
+      isActive: p.isActive === 1,
     }));
   }
 
   @Get(':id')
-  async getById(@Param('id') id: string, @Headers() headers: Record<string, string>) {
-    const userId = validateAuth(headers);
-    if (!userId) throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
+  async getById(@Headers('authorization') auth: string, @Param('id') id: string) {
+    const token = auth?.replace('Bearer ', '');
+    const user = await this.authService.validateToken(token);
+    if (!user) throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
 
-    const provider = await prisma.userProvider.findFirst({ where: { userId, id } });
+    const provider = await prisma.userProvider.findFirst({ where: { userId: user.userId, id } });
     if (!provider) throw new HttpException('Not found', HttpStatus.NOT_FOUND);
 
     return {
       ...provider,
-      settings: typeof provider.settings === 'string' ? JSON.parse(provider.settings) : provider.settings,
+      models: typeof provider.models === 'string' ? JSON.parse(provider.models) : provider.models,
+      isActive: provider.isActive === 1,
     };
   }
 
   @Post()
-  async create(@Headers() headers: Record<string, string>, @Body() body: { provider: string; settings?: Record<string, any> }) {
-    const userId = validateAuth(headers);
-    if (!userId) throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
+  async create(@Headers('authorization') auth: string, @Body() body: { name: string; type?: string; apiBase?: string; models?: string[]; sort?: number }) {
+    const token = auth?.replace('Bearer ', '');
+    const user = await this.authService.validateToken(token);
+    if (!user) throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
 
     const provider = await prisma.userProvider.create({
       data: {
-        userId,
-        provider: body.provider,
-        apiKey: '',
-        settings: JSON.stringify(body.settings ?? {}),
+        userId: user.userId,
+        name: body.name,
+        type: body.type ?? 'custom',
+        apiBase: body.apiBase ?? '',
+        models: JSON.stringify(body.models ?? []),
+        sort: body.sort ?? 0,
       },
     });
 
@@ -65,18 +63,23 @@ export class ProviderController {
   }
 
   @Put(':id')
-  async update(@Param('id') id: string, @Headers() headers: Record<string, string>, @Body() body: { provider?: string; settings?: Record<string, any> }) {
-    const userId = validateAuth(headers);
-    if (!userId) throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
+  async update(@Headers('authorization') auth: string, @Param('id') id: string, @Body() body: { name?: string; type?: string; apiBase?: string; models?: string[]; isActive?: boolean; sort?: number }) {
+    const token = auth?.replace('Bearer ', '');
+    const user = await this.authService.validateToken(token);
+    if (!user) throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
 
-    const existing = await prisma.userProvider.findFirst({ where: { userId, id } });
+    const existing = await prisma.userProvider.findFirst({ where: { userId: user.userId, id } });
     if (!existing) throw new HttpException('Not found', HttpStatus.NOT_FOUND);
 
     const provider = await prisma.userProvider.update({
       where: { id },
       data: {
-        provider: body.provider ?? existing.provider,
-        settings: body.settings !== undefined ? JSON.stringify(body.settings) : existing.settings,
+        name: body.name ?? existing.name,
+        type: body.type ?? existing.type,
+        apiBase: body.apiBase ?? existing.apiBase,
+        models: body.models !== undefined ? JSON.stringify(body.models) : existing.models,
+        isActive: body.isActive !== undefined ? (body.isActive ? 1 : 0) : existing.isActive,
+        sort: body.sort ?? existing.sort,
       },
     });
 
@@ -84,14 +87,35 @@ export class ProviderController {
   }
 
   @Delete(':id')
-  async remove(@Param('id') id: string, @Headers() headers: Record<string, string>) {
-    const userId = validateAuth(headers);
-    if (!userId) throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
+  async remove(@Headers('authorization') auth: string, @Param('id') id: string) {
+    const token = auth?.replace('Bearer ', '');
+    const user = await this.authService.validateToken(token);
+    if (!user) throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
 
-    const existing = await prisma.userProvider.findFirst({ where: { userId, id } });
+    const existing = await prisma.userProvider.findFirst({ where: { userId: user.userId, id } });
     if (!existing) throw new HttpException('Not found', HttpStatus.NOT_FOUND);
 
     await prisma.userProvider.delete({ where: { id } });
+    return { success: true };
+  }
+
+  @Put(':id/setActive')
+  async setActive(@Headers('authorization') auth: string, @Param('id') id: string) {
+    const token = auth?.replace('Bearer ', '');
+    const user = await this.authService.validateToken(token);
+    if (!user) throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
+
+    // Deactivate all
+    await prisma.userProvider.updateMany({
+      where: { userId: user.userId },
+      data: { isActive: 0 },
+    });
+    // Activate selected
+    await prisma.userProvider.update({
+      where: { id },
+      data: { isActive: 1 },
+    });
+
     return { success: true };
   }
 }
