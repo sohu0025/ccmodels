@@ -16,30 +16,32 @@ export function Settings() {
   const token = getToken();
 
   return (
-    <div className="p-8">
-      <h2 className="text-xl font-bold mb-6">Settings</h2>
+    <div className="space-y-5 max-w-xl">
+      <section className="card p-5">
+        <h3 className="text-base font-semibold mb-1">连接状态</h3>
+        <p className="text-xs text-text-secondary mb-4">当前与后端 API 的连接状态</p>
+        <div className="flex items-center gap-2">
+          <span className={`indicator ${token ? 'indicator-success' : 'indicator-danger'}`} />
+          <span className="text-sm">{token ? '已连接' : '未连接'}</span>
+        </div>
+      </section>
 
-      <div className="bg-white rounded-xl border border-gray-200 p-4 mb-6">
-        <h3 className="font-bold mb-3">Connection</h3>
-        <p className="text-sm text-gray-600">Status: {token ? <span className="text-green-600">Connected</span> : <span className="text-red-600">Disconnected</span>}</p>
-      </div>
-
-      <div className="bg-white rounded-xl border border-gray-200 p-4 mb-6">
-        <h3 className="font-bold mb-3">Data Sync</h3>
-        <p className="text-sm text-gray-500 mb-3">Test the sync connection to the backend.</p>
-        <button onClick={testSync} className="px-4 py-2 rounded-lg bg-blue-600 text-white text-sm hover:bg-blue-700">Test Sync</button>
+      <section className="card p-5">
+        <h3 className="text-base font-semibold mb-2">数据同步</h3>
+        <p className="text-xs text-text-secondary mb-4">测试与后端的同步连接。</p>
+        <button onClick={testSync} className="btn-primary">测试同步</button>
         {syncResult && (
-          <div className={`mt-3 p-3 rounded-lg text-sm ${syncResult.success ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
-            {syncResult.success ? `Success: ${JSON.stringify(syncResult.data)}` : `Error: ${syncResult.error}`}
+          <div className={`mt-4 p-3 rounded-xl text-sm ${syncResult.success ? 'bg-success/10 text-success' : 'bg-danger/10 text-danger'}`}>
+            {syncResult.success ? `同步成功：${JSON.stringify(syncResult.data)}` : `错误：${syncResult.error}`}
           </div>
         )}
-      </div>
+      </section>
 
-      <div className="bg-white rounded-xl border border-gray-200 p-4">
-        <h3 className="font-bold mb-3">About</h3>
-        <p className="text-sm text-gray-500">CC Switch Web Dashboard v0.1.0</p>
-        <p className="text-sm text-gray-500 mt-1">Read-only views of your desktop data, synced via the cloud API.</p>
-      </div>
+      <section className="card p-5">
+        <h3 className="text-base font-semibold mb-2">关于</h3>
+        <p className="text-sm text-text-secondary">CC Switch Web Dashboard v0.1.0</p>
+        <p className="text-sm text-text-secondary mt-1">桌面端数据的只读视图，通过云端 API 同步。</p>
+      </section>
     </div>
   );
 }

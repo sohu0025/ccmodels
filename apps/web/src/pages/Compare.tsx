@@ -6,6 +6,7 @@ export function Compare() {
   const [prompt, setPrompt] = useState('');
   const [modelsInput, setModelsInput] = useState('');
   const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     api.compare.list()
@@ -18,55 +19,72 @@ export function Compare() {
     const models = modelsInput.split(',').map((s: string) => s.trim()).filter(Boolean);
     const trimmed = prompt.trim();
     if (!trimmed || models.length === 0) return;
-    await api.compare.create({ prompt: trimmed, models });
-    const updated = await api.compare.list();
-    setTests(updated || []);
-    setPrompt('');
-    setModelsInput('');
+    setSubmitting(true);
+    try {
+      await api.compare.create({ prompt: trimmed, models });
+      const updated = await api.compare.list();
+      setTests(updated || []);
+      setPrompt('');
+      setModelsInput('');
+    } catch {
+      // ignore
+    } finally {
+      setSubmitting(false);
+    }
   };
 
-  if (loading) return <div className="p-8"><p className="text-gray-500">Loading...</p></div>;
+  if (loading) return <div className="text-text-secondary">Loading...</div>;
 
   return (
-    <div className="p-8">
-      <h2 className="text-xl font-bold mb-6">Model Comparison</h2>
-
-      <div className="bg-white rounded-xl border border-gray-200 p-4 mb-6">
-        <textarea value={prompt} onChange={(e) => setPrompt(e.target.value)}
-          placeholder="Enter prompt to test..." rows={4}
-          className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm mb-3" />
-        <input value={modelsInput} onChange={(e) => setModelsInput(e.target.value)}
-          placeholder="Model IDs (comma separated)"
-          className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm mb-3" />
-        <button onClick={handleRun}
-          className="px-4 py-2 rounded-lg bg-blue-600 text-white text-sm hover:bg-blue-700">Run Comparison</button>
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-2xl font-bold tracking-tight">模型对比</h2>
+        <p className="text-sm text-text-secondary mt-1">用相同 prompt 对比多个模型</p>
       </div>
 
-      <div className="space-y-3">
+      <div className="card p-5">
+        <textarea value={prompt} onChange={(e) => setPrompt(e.target.value)}
+          placeholder="输入要测试的 prompt..." rows={4}
+          className="input w-full resize-y mb-3" />
+        <input value={modelsInput} onChange={(e) => setModelsInput(e.target.value)}
+          placeholder="模型 ID（逗号分隔）"
+          className="input w-full mb-4" />
+        <button onClick={handleRun} disabled={submitting}
+          className="btn-primary disabled:opacity-50">
+          {submitting ? '提交中...' : '开始对比'}
+        </button>
+      </div>
+
+      <div className="space-y-4">
         {tests.length === 0 ? (
-          <p className="text-gray-500 text-center py-8">No comparison tests yet.</p>
+          <div className="card p-12 text-center">
+            <p className="text-lg font-medium mb-1">暂无对比测试</p>
+            <p className="text-sm text-text-secondary">输入 prompt 和模型 ID 开始对比</p>
+          </div>
         ) : tests.map(t => (
-          <div key={t.id} className="bg-white rounded-xl border border-gray-200 p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <span className={`w-1.5 h-1.5 rounded-full ${t.status === 'completed' ? 'bg-green-500' : 'bg-yellow-500'}`} />
-              <span className="font-medium text-sm">{t.prompt.substring(0, 80)}{t.prompt.length > 80 ? '...' : ''}</span>
-              <span className="text-xs text-gray-500">{Array.isArray(t.models) ? t.models.join(', ') : t.models}</span>
+          <div key={t.id} className="card p-5">
+            <div className="flex items-center gap-2.5 mb-4">
+              <span className={`indicator ${t.status === 'completed' ? 'indicator-success' : 'indicator-warning'}`} />
+              <span className="text-sm font-medium">{t.prompt.substring(0, 80)}{t.prompt.length > 80 ? '...' : ''}</span>
+              <span className="text-xs text-text-tertiary">{Array.isArray(t.models) ? t.models.join(', ') : t.models}</span>
             </div>
             {Array.isArray(t.responses) && t.responses.length > 0 && (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3">
-                {t.responses.map((r: any, i: number) => (
-                  <div key={r.modelId} className="bg-gray-50 rounded-lg p-3">
-                    <div className="text-xs font-medium mb-1">{r.modelId}</div>
-                    {r.error ? (
-                      <p className="text-xs text-red-500">{r.error}</p>
-                    ) : (
-                      <p className="text-xs text-gray-600 whitespace-pre-wrap line-clamp-6">{r.content}</p>
-                    )}
-                    <div className="flex gap-2 mt-2 text-xs text-gray-500">
-                      <span>{r.latencyMs}ms</span>
-                      <span>{r.tokens} tokens</span>
-                      <span>${r.cost?.toFixed(6) ?? '0'}</span>
+              <div className="grid grid-cols-2 gap-4">
+                {t.responses.map((r: any) => (
+                  <div key={r.modelId} className="bg-bg-secondary rounded-xl p-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-xs font-semibold">{r.modelId}</span>
+                      <div className="flex gap-3 text-xs text-text-tertiary">
+                        <span>{r.latencyMs}ms</span>
+                        <span>{r.tokens} tokens</span>
+                        <span>${r.cost?.toFixed(6) ?? '0'}</span>
+                      </div>
                     </div>
+                    {r.error ? (
+                      <p className="text-xs text-danger">{r.error}</p>
+                    ) : (
+                      <p className="text-xs text-text-secondary whitespace-pre-wrap line-clamp-6 leading-relaxed">{r.content}</p>
+                    )}
                   </div>
                 ))}
               </div>
