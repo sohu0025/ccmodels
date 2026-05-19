@@ -1,7 +1,7 @@
 import http from 'node:http';
 import https from 'node:https';
 import { resolveRoute } from './router';
-import { logRequest } from './logger';
+import { logRequest, logRequestWithUsage, parseUsageFromResponse } from './logger';
 import { getSettings } from '../database/settings';
 
 let server: http.Server | null = null;
@@ -100,22 +100,43 @@ function handleRequest(
         rejectUnauthorized: true, // Verify TLS certificates
       },
       (proxyRes) => {
-        const latencyMs = Date.now() - startTime;
+        const chunks: Buffer[] = [];
+        proxyRes.on('data', (chunk: Buffer) => chunks.push(chunk));
+        proxyRes.on('end', () => {
+          const responseBody = Buffer.concat(chunks).toString('utf-8');
+          const latencyMs = Date.now() - startTime;
 
-        // Log the request
-        logRequest({
-          providerId: route.providerId,
-          modelId,
-          method: req.method ?? 'GET',
-          path: req.url ?? '/',
-          statusCode: proxyRes.statusCode ?? 200,
-          latencyMs,
-          cliTool: cliTool ?? 'unknown',
+          const usage = parseUsageFromResponse(responseBody, modelId);
+
+          if (usage) {
+            logRequestWithUsage({
+              providerId: route.providerId,
+              modelId,
+              method: req.method ?? 'GET',
+              path: req.url ?? '/',
+              statusCode: proxyRes.statusCode ?? 200,
+              latencyMs,
+              cliTool: cliTool ?? 'unknown',
+              promptTokens: usage.promptTokens,
+              completionTokens: usage.completionTokens,
+              cacheHitTokens: usage.cacheHitTokens,
+              cost: usage.cost,
+            });
+          } else {
+            logRequest({
+              providerId: route.providerId,
+              modelId,
+              method: req.method ?? 'GET',
+              path: req.url ?? '/',
+              statusCode: proxyRes.statusCode ?? 200,
+              latencyMs,
+              cliTool: cliTool ?? 'unknown',
+            });
+          }
+
+          res.writeHead(proxyRes.statusCode ?? 200, proxyRes.headers);
+          res.end(responseBody);
         });
-
-        // Forward response
-        res.writeHead(proxyRes.statusCode ?? 200, proxyRes.headers);
-        proxyRes.pipe(res);
       },
     );
 
