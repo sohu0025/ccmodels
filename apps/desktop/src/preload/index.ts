@@ -34,4 +34,36 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // Budget
   getBudgetStatus: () => ipcRenderer.invoke('budget:status'),
   checkBudget: () => ipcRenderer.invoke('budget:check'),
+
+  // MCP
+  listMcpServers: () => ipcRenderer.invoke('mcp:list'),
+  getMcpServer: (id: string) => ipcRenderer.invoke('mcp:get', id),
+  createMcpServer: (data: any) => ipcRenderer.invoke('mcp:create', data),
+  updateMcpServer: (id: string, data: any) => ipcRenderer.invoke('mcp:update', id, data),
+  deleteMcpServer: (id: string) => ipcRenderer.invoke('mcp:delete', id),
+  setMcpEnabled: (id: string, enabled: boolean) => ipcRenderer.invoke('mcp:setEnabled', id, enabled),
+  startMcpServer: (id: string) => ipcRenderer.invoke('mcp:start', id),
+  stopMcpServer: (id: string) => ipcRenderer.invoke('mcp:stop', id),
+  getMcpStatus: (id: string) => ipcRenderer.invoke('mcp:status', id),
+
+  // Skills
+  listSkills: () => ipcRenderer.invoke('skill:list'),
+  getSkill: (id: string) => ipcRenderer.invoke('skill:get', id),
+  createSkill: (data: any) => ipcRenderer.invoke('skill:create', data),
+  updateSkill: (id: string, data: any) => ipcRenderer.invoke('skill:update', id, data),
+  deleteSkill: (id: string) => ipcRenderer.invoke('skill:delete', id),
+  setSkillActive: (id: string, active: boolean) => ipcRenderer.invoke('skill:setActive', id, active),
+  checkSkillConflict: (name: string, excludeId?: string) => ipcRenderer.invoke('skill:checkConflict', name, excludeId),
+
+  // Prompts
+  listPrompts: () => ipcRenderer.invoke('prompt:list'),
+  getPrompt: (id: string) => ipcRenderer.invoke('prompt:get', id),
+  createPrompt: (data: any) => ipcRenderer.invoke('prompt:create', data),
+  updatePrompt: (id: string, data: any) => ipcRenderer.invoke('prompt:update', id, data),
+  deletePrompt: (id: string) => ipcRenderer.invoke('prompt:delete', id),
+  setPromptActive: (id: string, active: boolean) => ipcRenderer.invoke('prompt:setActive', id, active),
+
+  // Sync
+  getSyncStatus: () => ipcRenderer.invoke('sync:status'),
+  triggerSync: () => ipcRenderer.invoke('sync:trigger'),
 });

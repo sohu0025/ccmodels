@@ -8,6 +8,11 @@ import * as usageDb from './database/usage';
 import * as sessionDb from './database/sessions';
 import * as speedTestDb from './database/speed-tests';
 import * as budgetDb from './database/budget-alerts';
+import * as mcpDb from './database/mcp';
+import * as skillDb from './database/skills';
+import * as promptDb from './database/prompts';
+import * as syncQueueDb from './database/sync-queue';
+import { startMcpServer, stopMcpServer, getMcpProcessStatus } from './mcp-manager';
 
 export function registerIpcHandlers(_mainWindow: BrowserWindow): void {
   // ── Provider handlers (real database) ──
@@ -57,4 +62,36 @@ export function registerIpcHandlers(_mainWindow: BrowserWindow): void {
   // ── Budget handlers ──
   ipcMain.handle('budget:status', () => budgetDb.getBudgetStatus());
   ipcMain.handle('budget:check', () => budgetDb.checkBudgetThreshold());
+
+  // ── MCP handlers ──
+  ipcMain.handle('mcp:list', () => mcpDb.getAllMcpServers());
+  ipcMain.handle('mcp:get', (_e, id) => mcpDb.getMcpServerById(id));
+  ipcMain.handle('mcp:create', (_e, data) => mcpDb.createMcpServer(data));
+  ipcMain.handle('mcp:update', (_e, id, data) => mcpDb.updateMcpServer(id, data));
+  ipcMain.handle('mcp:delete', (_e, id) => { mcpDb.deleteMcpServer(id); });
+  ipcMain.handle('mcp:setEnabled', (_e, id, enabled) => { mcpDb.setMcpEnabled(id, enabled); if (enabled) startMcpServer(mcpDb.getMcpServerById(id)!); else stopMcpServer(id); });
+  ipcMain.handle('mcp:start', (_e, id) => { const s = mcpDb.getMcpServerById(id); return s ? startMcpServer(s) : false; });
+  ipcMain.handle('mcp:stop', (_e, id) => stopMcpServer(id));
+  ipcMain.handle('mcp:status', (_e, id) => getMcpProcessStatus(id));
+
+  // ── Skills handlers ──
+  ipcMain.handle('skill:list', () => skillDb.getAllSkills());
+  ipcMain.handle('skill:get', (_e, id) => skillDb.getSkillById(id));
+  ipcMain.handle('skill:create', (_e, data) => skillDb.createSkill(data));
+  ipcMain.handle('skill:update', (_e, id, data) => skillDb.updateSkill(id, data));
+  ipcMain.handle('skill:delete', (_e, id) => { skillDb.deleteSkill(id); });
+  ipcMain.handle('skill:setActive', (_e, id, active) => { skillDb.setSkillActive(id, active); });
+  ipcMain.handle('skill:checkConflict', (_e, name, excludeId) => skillDb.checkSkillConflict(name, excludeId));
+
+  // ── Prompts handlers ──
+  ipcMain.handle('prompt:list', () => promptDb.getAllPrompts());
+  ipcMain.handle('prompt:get', (_e, id) => promptDb.getPromptById(id));
+  ipcMain.handle('prompt:create', (_e, data) => promptDb.createPrompt(data));
+  ipcMain.handle('prompt:update', (_e, id, data) => promptDb.updatePrompt(id, data));
+  ipcMain.handle('prompt:delete', (_e, id) => { promptDb.deletePrompt(id); });
+  ipcMain.handle('prompt:setActive', (_e, id, active) => { promptDb.setPromptActive(id, active); });
+
+  // ── Sync handlers ──
+  ipcMain.handle('sync:status', () => syncQueueDb.getSyncStatus());
+  ipcMain.handle('sync:trigger', () => { /* sync logic in Phase 3b */ return { success: false, message: 'Cloud server not configured' }; });
 }
