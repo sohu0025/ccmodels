@@ -92,4 +92,4 @@ export const en = {
     success: 'Success',
     error: 'Error',
   },
-} as const;
+};

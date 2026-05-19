@@ -10,7 +10,13 @@
       "Bash(npm install *)",
       "Bash(pnpm install *)",
       "Bash(git add *)",
-      "Bash(git commit *)"
+      "Bash(git commit *)",
+      "Bash(git *)",
+      "Bash(pnpm --version)",
+      "Bash(node -e \"console.log\\(require\\('eslint/package.json'\\).version\\)\")",
+      "Bash(npx eslint *)",
+      "Bash(npx tsc *)",
+      "Bash(pnpm *)"
     ]
   }
 }

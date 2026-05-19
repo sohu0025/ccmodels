@@ -92,4 +92,4 @@ export const zh = {
     success: '操作成功',
     error: '操作失败',
   },
-} as const;
+};
