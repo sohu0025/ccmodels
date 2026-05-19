@@ -3,10 +3,13 @@ import { createMainWindow } from './window';
 import { registerIpcHandlers } from './ipc-handlers';
 import { initDatabase, closeDatabase } from './database';
 import { startProxy } from './proxy';
+import { initConfigManager } from './config-manager';
+import { stopConfigWatcher } from './config-manager/watcher';
 
 let mainWindow: BrowserWindow | null = null;
 
 app.on('will-quit', () => {
+  stopConfigWatcher();
   closeDatabase();
 });
 
@@ -15,6 +18,7 @@ async function bootstrap() {
   mainWindow = createMainWindow();
   initDatabase();
   startProxy();
+  initConfigManager();
   registerIpcHandlers(mainWindow);
 }
 

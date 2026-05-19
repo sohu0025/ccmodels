@@ -3,6 +3,7 @@ import * as providerDb from './database/providers';
 import * as settingDb from './database/settings';
 import { PRESET_PROVIDERS } from '@ccswitch/shared';
 import { getProxyStatus } from './proxy';
+import { scanCliTools, applyConfig, restoreConfig } from './config-manager';
 
 export function registerIpcHandlers(_mainWindow: BrowserWindow): void {
   // ── Provider handlers (real database) ──
@@ -28,14 +29,8 @@ export function registerIpcHandlers(_mainWindow: BrowserWindow): void {
   // ── Proxy handlers ──
   ipcMain.handle('proxy:status', () => getProxyStatus());
 
-  // ── Config manager handlers (stub — Task 7) ──
-  ipcMain.handle('config:scan', () => []);
-  ipcMain.handle('config:apply', (_e, _toolName: string) => ({
-    success: false,
-    message: 'Not implemented yet',
-  }));
-  ipcMain.handle('config:restore', (_e, _toolName: string) => ({
-    success: false,
-    message: 'Not implemented yet',
-  }));
+  // ── Config manager handlers ──
+  ipcMain.handle('config:scan', () => scanCliTools());
+  ipcMain.handle('config:apply', (_e, toolName: string) => applyConfig(toolName));
+  ipcMain.handle('config:restore', (_e, toolName: string) => restoreConfig(toolName));
 }
