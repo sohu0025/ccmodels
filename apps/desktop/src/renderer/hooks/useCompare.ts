@@ -6,19 +6,32 @@ const api = (window as any).electronAPI;
 export function useCompare() {
   const [tests, setTests] = useState<CompareTest[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const refresh = useCallback(async () => {
-    setTests(await api.listCompareTests());
-    setLoading(false);
+    try {
+      setLoading(true);
+      setTests(await api.listCompareTests());
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
   useEffect(() => { refresh(); }, [refresh]);
 
   const create = async (prompt: string, models: string[]) => {
-    const test = await api.createCompareTest(prompt, models);
-    refresh();
-    return test;
+    try {
+      setError(null);
+      const test = await api.createCompareTest(prompt, models);
+      refresh();
+      return test;
+    } catch (err: any) {
+      setError(err.message);
+      throw err;
+    }
   };
 
-  return { tests, loading, refresh, create };
+  return { tests, loading, error, refresh, create };
 }
