@@ -1,4 +1,5 @@
-import { getActiveProvider } from '../database/providers';
+import { getActiveProvider, getFallbackProvider } from '../database/providers';
+import { isCircuitOpen } from './failover';
 
 export interface RouteResult {
   targetUrl: string;
@@ -17,8 +18,17 @@ export function resolveRoute(
   originalHeaders: Record<string, string>,
   cliTool: string | null,
 ): RouteResult | null {
-  const provider = getActiveProvider();
+  let provider = getActiveProvider();
   if (!provider) return null;
+
+  // Check circuit breaker — auto-failover to fallback provider
+  if (isCircuitOpen(provider.id)) {
+    const fallback = getFallbackProvider(provider.id);
+    if (fallback) {
+      console.log(`[CC Switch] Failover: ${provider.name} -> ${fallback.name}`);
+      provider = fallback;
+    }
+  }
 
   // Use CLI-tool-specific endpoint if configured
   let baseUrl = provider.apiBase;

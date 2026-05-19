@@ -3,6 +3,7 @@ import * as providerDb from './database/providers';
 import * as settingDb from './database/settings';
 import { PRESET_PROVIDERS } from '@ccswitch/shared';
 import { getProxyStatus } from './proxy';
+import { getAllCircuitStatuses } from './proxy/failover';
 import { scanCliTools, applyConfig, restoreConfig } from './config-manager';
 import * as usageDb from './database/usage';
 import * as sessionDb from './database/sessions';
@@ -38,6 +39,7 @@ export function registerIpcHandlers(_mainWindow: BrowserWindow): void {
 
   // ── Proxy handlers ──
   ipcMain.handle('proxy:status', () => getProxyStatus());
+  ipcMain.handle('failover:status', () => getAllCircuitStatuses());
 
   // ── Config manager handlers ──
   ipcMain.handle('config:scan', () => scanCliTools());

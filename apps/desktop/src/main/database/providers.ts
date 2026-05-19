@@ -73,6 +73,13 @@ export function deleteProvider(id: string): void {
   getDb().prepare('DELETE FROM providers WHERE id = ?').run(id);
 }
 
+export function getFallbackProvider(failedProviderId: string): Provider | null {
+  const rows = getDb().prepare(
+    'SELECT * FROM providers WHERE is_active = 1 AND id != ? ORDER BY sort ASC LIMIT 1'
+  ).all(failedProviderId) as ProviderRow[];
+  return rows.length > 0 ? mapRow(rows[0]) : null;
+}
+
 export function setActiveProvider(id: string): void {
   const db = getDb();
   db.prepare('UPDATE providers SET is_active = 0').run();

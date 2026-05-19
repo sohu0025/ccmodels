@@ -11,6 +11,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   getSettings: () => ipcRenderer.invoke('settings:get'),
   updateSettings: (data: unknown) => ipcRenderer.invoke('settings:update', data),
   getProxyStatus: () => ipcRenderer.invoke('proxy:status'),
+  getFailoverStatus: () => ipcRenderer.invoke('failover:status'),
   scanCliTools: () => ipcRenderer.invoke('config:scan'),
   applyConfig: (toolName: string) => ipcRenderer.invoke('config:apply', toolName),
   restoreConfig: (toolName: string) => ipcRenderer.invoke('config:restore', toolName),

@@ -3,6 +3,7 @@ import https from 'node:https';
 import { resolveRoute } from './router';
 import { logRequest, logRequestWithUsage, parseUsageFromResponse } from './logger';
 import { getSettings } from '../database/settings';
+import { recordFailure, recordSuccess } from './failover';
 
 let server: http.Server | null = null;
 let requestCount = 0;
@@ -134,6 +135,14 @@ function handleRequest(
             });
           }
 
+          // Record success/failure for circuit breaker
+          const statusCode = proxyRes.statusCode ?? 200;
+          if (statusCode >= 500) {
+            recordFailure(route.providerId);
+          } else {
+            recordSuccess(route.providerId);
+          }
+
           res.writeHead(proxyRes.statusCode ?? 200, proxyRes.headers);
           res.end(responseBody);
         });
@@ -142,6 +151,7 @@ function handleRequest(
 
     proxyReq.on('error', (err) => {
       console.error('[CC Switch] Proxy request failed:', err.message);
+      recordFailure(route.providerId);
       if (!res.headersSent) {
         res.writeHead(502, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ error: 'Proxy request failed', message: err.message }));
