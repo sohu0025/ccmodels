@@ -20,5 +20,5 @@ export function useSkills() {
   const toggleActive = async (id: string, active: boolean) => { await api.setSkillActive(id, active); refresh(); };
   const checkConflict = (name: string, excludeId?: string) => api.checkSkillConflict(name, excludeId);
 
-  return { skills, loading, refresh, create, update, remove, toggleActive, checkConflict };
+  return { skills, loading, refresh, create, remove, toggleActive, checkConflict };
 }

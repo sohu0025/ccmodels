@@ -14,6 +14,7 @@ import * as skillDb from './database/skills';
 import * as promptDb from './database/prompts';
 import * as syncQueueDb from './database/sync-queue';
 import * as compareDb from './database/compare-tests';
+import * as recommendDb from './database/recommendations';
 import { startMcpServer, stopMcpServer, getMcpProcessStatus } from './mcp-manager';
 import { triggerSync, getSyncState } from './sync';
 
@@ -100,6 +101,10 @@ export function registerIpcHandlers(_mainWindow: BrowserWindow): void {
   ipcMain.handle('compare:get', (_e, id) => compareDb.getCompareTestById(id));
   ipcMain.handle('compare:create', (_e, prompt, models) => compareDb.createCompareTest(prompt, models));
   ipcMain.handle('compare:updateResponse', (_e, testId, response) => compareDb.updateCompareResponse(testId, response));
+
+  // ── Recommendation handlers ──
+  ipcMain.handle('recommendation:list', () => recommendDb.getAllRecommendations());
+  ipcMain.handle('recommendation:generate', () => { recommendDb.generateRecommendations(); return recommendDb.getAllRecommendations(); });
 
   // ── Sync handlers ──
   ipcMain.handle('sync:status', () => ({ ...syncQueueDb.getSyncStatus(), ...getSyncState() }));

@@ -1,11 +1,35 @@
 import { useState } from 'react';
 import { useMcp } from '../hooks/useMcp';
-import type { MCPTransport, MCPServerFormData } from '@ccswitch/shared';
+import type { MCPTransport } from '@ccswitch/shared';
 
 export function Mcp() {
   const { servers, statuses, loading, create, update, remove, toggleEnabled, startStop } = useMcp();
   const [editing, setEditing] = useState(false);
-  const [form, setForm] = useState<MCPServerFormData & { id?: string }>({ name: '', transport: 'stdio', command: '', args: [], url: '', headers: {}, envVars: {} });
+  const [form, setForm] = useState<{ name: string; transport: MCPTransport; command?: string; args?: string[]; url?: string; id?: string }>({ name: '', transport: 'stdio', command: '', args: [], url: '' });
+
+  const handleSave = async () => {
+    const saveData: any = { ...form };
+    if (form.id) {
+      // Preserve original args if the joined representation hasn't changed
+      const original = servers.find((s: any) => s.id === form.id);
+      if (original) {
+        const origStr = (original.args ?? []).join(' ');
+        const currentStr = (saveData.args ?? []).join(' ');
+        if (origStr === currentStr) {
+          saveData.args = original.args;
+        }
+      }
+      // Don't pass headers/envVars so backend keeps existing values
+      delete saveData.headers;
+      delete saveData.envVars;
+      await update(form.id, saveData);
+    } else {
+      saveData.headers = {};
+      saveData.envVars = {};
+      await create(saveData);
+    }
+    setEditing(false);
+  };
 
   if (loading) return <div className="p-8 text-text-secondary">Loading...</div>;
 
@@ -16,7 +40,7 @@ export function Mcp() {
           <h2 className="text-xl font-bold">MCP Servers</h2>
           <p className="text-sm text-text-secondary mt-1">Manage MCP servers (stdio, HTTP, SSE)</p>
         </div>
-        <button onClick={() => { setEditing(true); setForm({ name: '', transport: 'stdio', command: '', args: [], url: '', headers: {}, envVars: {} }); }}
+        <button onClick={() => { setEditing(true); setForm({ name: '', transport: 'stdio', command: '', args: [], url: '' }); }}
           className="px-4 py-2 rounded-lg bg-accent text-white text-sm hover:bg-accent-hover">+ Add MCP</button>
       </div>
 
@@ -41,7 +65,7 @@ export function Mcp() {
                   {statuses[s.id] === 'running' ? 'Stop' : 'Start'}
                 </button>
               )}
-              <button onClick={() => { setEditing(true); setForm({ id: s.id, name: s.name, transport: s.transport, command: s.command, args: s.args, url: s.url, headers: s.headers, envVars: s.envVars }); }}
+              <button onClick={() => { setEditing(true); setForm({ id: s.id, name: s.name, transport: s.transport, command: s.command, args: s.args, url: s.url }); }}
                 className="text-xs px-2 py-1 rounded border border-border">Edit</button>
               <button onClick={() => remove(s.id)} className="text-xs px-2 py-1 rounded border border-border text-danger">Delete</button>
             </div>
@@ -72,11 +96,7 @@ export function Mcp() {
             </div>
             <div className="flex justify-end gap-2 mt-4">
               <button onClick={() => setEditing(false)} className="px-3 py-2 rounded-lg border border-border text-sm">Cancel</button>
-              <button onClick={async () => {
-                if (form.id) await update(form.id, form);
-                else await create(form);
-                setEditing(false);
-              }} className="px-3 py-2 rounded-lg bg-accent text-white text-sm">Save</button>
+              <button onClick={handleSave} className="px-3 py-2 rounded-lg bg-accent text-white text-sm">Save</button>
             </div>
           </div>
         </div>

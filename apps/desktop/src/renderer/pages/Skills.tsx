@@ -3,7 +3,7 @@ import { useSkills } from '../hooks/useSkills';
 import type { SkillFormData, Skill } from '@ccswitch/shared';
 
 export function Skills() {
-  const { skills, loading, create, update, remove, toggleActive, checkConflict } = useSkills();
+  const { skills, loading, create, remove, toggleActive, checkConflict } = useSkills();
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState<SkillFormData & { id?: string }>({ name: '', sourceUrl: '', config: {} });
 

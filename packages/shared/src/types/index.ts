@@ -11,6 +11,7 @@ export * from './skill';
 export * from './prompt';
 export * from './sync';
 export * from './compare';
+export * from './recommendation';
 
 export interface IPCChannels {
   'provider:list': { args: void; result: Provider[] };
