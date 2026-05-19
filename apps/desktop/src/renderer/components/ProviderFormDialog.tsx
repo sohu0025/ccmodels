@@ -41,21 +41,22 @@ export function ProviderFormDialog({ open, onClose, onSave, initialData }: Props
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div className="bg-bg-primary rounded-xl shadow-xl w-full max-w-lg p-6 max-h-[90vh] overflow-auto">
-        <h3 className="text-lg font-bold mb-4">{initialData ? '编辑供应商' : '添加供应商'}</h3>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={onClose}>
+      <div className="card p-6 w-full max-w-lg mx-4 max-h-[90vh] overflow-auto" onClick={(e) => e.stopPropagation()}>
+        <h3 className="text-lg font-bold mb-5">{initialData ? '编辑供应商' : '添加供应商'}</h3>
 
+        {/* Preset providers */}
         {!initialData && (
-          <div className="mb-4">
+          <div className="mb-5">
             <label className="text-xs font-semibold text-text-secondary uppercase mb-2 block">
               从预设导入
             </label>
-            <div className="flex flex-wrap gap-1">
+            <div className="flex flex-wrap gap-1.5">
               {PRESET_PROVIDERS.map((p) => (
                 <button
                   key={p.name}
                   onClick={() => handlePresetSelect(p)}
-                  className="text-xs px-2 py-1 rounded border border-border hover:bg-accent/10"
+                  className="badge badge-ghost cursor-pointer hover:bg-accent/10 transition-colors"
                 >
                   {p.name}
                 </button>
@@ -64,59 +65,56 @@ export function ProviderFormDialog({ open, onClose, onSave, initialData }: Props
           </div>
         )}
 
-        <div className="space-y-3">
+        {/* Form fields */}
+        <div className="space-y-3.5">
           <div>
-            <label className="text-xs font-semibold text-text-secondary block mb-1">名称 *</label>
+            <label className="text-xs font-semibold text-text-secondary block mb-1.5">名称 *</label>
             <input
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="例如：DeepSeek"
-              className="w-full px-3 py-2 rounded-lg border border-border bg-bg-primary text-sm"
+              className="input w-full"
             />
           </div>
           <div>
-            <label className="text-xs font-semibold text-text-secondary block mb-1">API 地址 *</label>
+            <label className="text-xs font-semibold text-text-secondary block mb-1.5">API 地址 *</label>
             <input
               value={apiBase}
               onChange={(e) => setApiBase(e.target.value)}
               placeholder="https://api.deepseek.com"
-              className="w-full px-3 py-2 rounded-lg border border-border bg-bg-primary text-sm font-mono"
+              className="input w-full font-mono"
             />
           </div>
           <div>
-            <label className="text-xs font-semibold text-text-secondary block mb-1">API Key *</label>
+            <label className="text-xs font-semibold text-text-secondary block mb-1.5">API Key *</label>
             <input
               value={apiKey}
               onChange={(e) => setApiKey(e.target.value)}
               placeholder="sk-..."
               type="password"
-              className="w-full px-3 py-2 rounded-lg border border-border bg-bg-primary text-sm font-mono"
+              className="input w-full font-mono"
             />
           </div>
           <div>
-            <label className="text-xs font-semibold text-text-secondary block mb-1">
+            <label className="text-xs font-semibold text-text-secondary block mb-1.5">
               模型列表（逗号分隔）
             </label>
             <input
               value={models}
               onChange={(e) => setModels(e.target.value)}
               placeholder="deepseek-chat, deepseek-reasoner"
-              className="w-full px-3 py-2 rounded-lg border border-border bg-bg-primary text-sm"
+              className="input w-full"
             />
           </div>
         </div>
 
-        <div className="flex justify-end gap-3 mt-6">
-          <button
-            onClick={onClose}
-            className="px-4 py-2 rounded-lg border border-border text-sm"
-          >
-            取消
-          </button>
+        {/* Actions */}
+        <div className="flex justify-end gap-2.5 mt-6">
+          <button onClick={onClose} className="btn-ghost">取消</button>
           <button
             onClick={handleSave}
             disabled={!name || !apiBase || saving}
-            className="px-4 py-2 rounded-lg bg-accent text-white text-sm font-medium hover:bg-accent-hover disabled:opacity-50"
+            className="btn-primary disabled:opacity-50"
           >
             {saving ? '保存中...' : '保存'}
           </button>

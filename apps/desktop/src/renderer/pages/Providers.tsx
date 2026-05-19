@@ -19,21 +19,21 @@ export function Providers() {
     setEditing(null);
   };
 
-  if (loading) return <div className="p-8 text-text-secondary">加载中...</div>;
+  if (loading) return <div className="text-text-secondary">加载中...</div>;
 
   const activeProvider = providers.find((p) => p.isActive);
   const otherProviders = providers.filter((p) => !p.isActive);
 
   return (
-    <div className="p-8">
+    <div>
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h2 className="text-xl font-bold">供应商管理</h2>
+          <h2 className="text-2xl font-bold tracking-tight">供应商管理</h2>
           <p className="text-sm text-text-secondary mt-1">管理所有 AI CLI 工具的 API 供应商</p>
         </div>
         <button
           onClick={() => { setEditing(null); setDialogOpen(true); }}
-          className="px-4 py-2 rounded-lg bg-accent text-white text-sm font-medium hover:bg-accent-hover"
+          className="btn-primary"
         >
           + 添加供应商
         </button>
@@ -41,8 +41,8 @@ export function Providers() {
 
       {activeProvider && (
         <div className="mb-8">
-          <h3 className="text-sm font-semibold text-text-secondary mb-3 uppercase">当前使用</h3>
-          <div className="grid grid-cols-2 gap-4">
+          <p className="sidebar-title mb-3">当前使用</p>
+          <div className="card p-5">
             <ProviderCard
               provider={activeProvider}
               isActive={true}
@@ -54,31 +54,32 @@ export function Providers() {
         </div>
       )}
 
-      {otherProviders.length > 0 ? (
+      {otherProviders.length > 0 && (
         <div>
-          <h3 className="text-sm font-semibold text-text-secondary mb-3 uppercase">
+          <p className="sidebar-title mb-3">
             {activeProvider ? '其他供应商' : '所有供应商'}
-          </h3>
+          </p>
           <div className="grid grid-cols-2 gap-4">
             {otherProviders.map((p) => (
-              <ProviderCard
-                key={p.id}
-                provider={p}
-                isActive={false}
-                onSetActive={() => setActive(p.id)}
-                onEdit={() => { setEditing(p); setDialogOpen(true); }}
-                onDelete={() => remove(p.id)}
-              />
+              <div key={p.id} className="card p-5">
+                <ProviderCard
+                  provider={p}
+                  isActive={false}
+                  onSetActive={() => setActive(p.id)}
+                  onEdit={() => { setEditing(p); setDialogOpen(true); }}
+                  onDelete={() => remove(p.id)}
+                />
+              </div>
             ))}
           </div>
         </div>
-      ) : (
-        !activeProvider && (
-          <div className="text-center py-16 text-text-secondary">
-            <p className="text-lg mb-2">暂无供应商</p>
-            <p className="text-sm">点击上方按钮添加你的第一个 API 供应商</p>
-          </div>
-        )
+      )}
+
+      {!activeProvider && otherProviders.length === 0 && (
+        <div className="text-center py-16 text-text-secondary">
+          <p className="text-lg mb-2">暂无供应商</p>
+          <p className="text-sm">点击上方按钮添加你的第一个 API 供应商</p>
+        </div>
       )}
 
       <ProviderFormDialog

@@ -4,7 +4,7 @@ import type { Theme, Locale } from '@ccswitch/shared';
 export function Settings() {
   const { settings, update } = useSettings();
 
-  if (!settings) return <div className="p-8 text-text-secondary">加载中...</div>;
+  if (!settings) return <div className="text-text-secondary">加载中...</div>;
 
   const handleThemeChange = (theme: Theme) => {
     update({ theme });
@@ -18,75 +18,78 @@ export function Settings() {
     }
   };
 
-  return (
-    <div className="p-8 max-w-2xl">
-      <h2 className="text-xl font-bold mb-6">设置</h2>
-
-      <div className="space-y-6">
-        <section>
-          <h3 className="text-sm font-semibold mb-2">主题</h3>
-          <p className="text-xs text-text-secondary mb-3">选择界面颜色主题</p>
-          <div className="flex gap-2">
-            {(['light', 'dark', 'system'] as Theme[]).map((t) => (
-              <button
-                key={t}
-                onClick={() => handleThemeChange(t)}
-                className={`px-4 py-2 rounded-lg text-sm border ${
-                  settings.theme === t ? 'border-accent bg-accent/10 text-accent' : 'border-border'
-                }`}
-              >
-                {{ light: '☀️ 浅色', dark: '🌙 深色', system: '💻 跟随系统' }[t]}
-              </button>
-            ))}
-          </div>
-        </section>
-
-        <section>
-          <h3 className="text-sm font-semibold mb-2">语言</h3>
-          <p className="text-xs text-text-secondary mb-3">界面显示语言</p>
-          <div className="flex gap-2">
-            {(['zh-CN', 'en-US'] as Locale[]).map((l) => (
-              <button
-                key={l}
-                onClick={() => update({ locale: l })}
-                className={`px-4 py-2 rounded-lg text-sm border ${
-                  settings.locale === l ? 'border-accent bg-accent/10 text-accent' : 'border-border'
-                }`}
-              >
-                {{ 'zh-CN': '中文', 'en-US': 'English' }[l]}
-              </button>
-            ))}
-          </div>
-        </section>
-
-        <section>
-          <h3 className="text-sm font-semibold mb-2">自动配置 CLI</h3>
-          <p className="text-xs text-text-secondary mb-3">自动修改 CLI 工具配置指向本地代理</p>
-          <label className="flex items-center gap-3">
-            <input
-              type="checkbox"
-              checked={settings.autoConfigCli}
-              onChange={(e) => update({ autoConfigCli: e.target.checked })}
-              className="w-4 h-4"
-            />
-            <span className="text-sm">启用自动配置</span>
-          </label>
-        </section>
-
-        <section>
-          <h3 className="text-sm font-semibold mb-2">轻量模式</h3>
-          <p className="text-xs text-text-secondary mb-3">仅系统托盘运行，不显示主窗口</p>
-          <label className="flex items-center gap-3">
-            <input
-              type="checkbox"
-              checked={settings.lightweightMode}
-              onChange={(e) => update({ lightweightMode: e.target.checked })}
-              className="w-4 h-4"
-            />
-            <span className="text-sm">启用轻量模式</span>
-          </label>
-        </section>
+  const ToggleOption = ({ label, checked, onChange }: { label: string; checked: boolean; onChange: (v: boolean) => void }) => (
+    <label className="flex items-center justify-between py-2">
+      <span className="text-sm">{label}</span>
+      <div
+        className={`w-10 h-6 rounded-full cursor-pointer transition-colors relative ${checked ? 'bg-accent' : 'bg-text-tertiary'}`}
+        onClick={() => onChange(!checked)}
+      >
+        <div className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${checked ? 'translate-x-4' : ''}`} />
       </div>
+    </label>
+  );
+
+  return (
+    <div className="max-w-xl space-y-5">
+      <section className="card p-5">
+        <h3 className="text-base font-semibold mb-1">主题</h3>
+        <p className="text-xs text-text-secondary mb-4">选择界面颜色主题</p>
+        <div className="flex gap-3">
+          {([
+            { key: 'light' as Theme, label: '☀️ 浅色' },
+            { key: 'dark' as Theme, label: '🌙 深色' },
+            { key: 'system' as Theme, label: '💻 跟随系统' },
+          ]).map(({ key, label }) => (
+            <button
+              key={key}
+              onClick={() => handleThemeChange(key)}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                settings.theme === key
+                  ? 'bg-accent text-white'
+                  : 'bg-bg-card border border-border text-text-secondary hover:bg-border'
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      </section>
+
+      <section className="card p-5">
+        <h3 className="text-base font-semibold mb-1">语言</h3>
+        <p className="text-xs text-text-secondary mb-4">界面显示语言</p>
+        <div className="flex gap-3">
+          {([
+            { key: 'zh-CN' as Locale, label: '中文' },
+            { key: 'en-US' as Locale, label: 'English' },
+          ]).map(({ key, label }) => (
+            <button
+              key={key}
+              onClick={() => update({ locale: key })}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                settings.locale === key
+                  ? 'bg-accent text-white'
+                  : 'bg-bg-card border border-border text-text-secondary hover:bg-border'
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      </section>
+
+      <section className="card p-5">
+        <h3 className="text-base font-semibold mb-3">自动配置 CLI</h3>
+        <p className="text-xs text-text-secondary mb-4">自动修改 CLI 工具配置指向本地代理</p>
+        <ToggleOption label="启用自动配置" checked={settings.autoConfigCli} onChange={(v) => update({ autoConfigCli: v })} />
+      </section>
+
+      <section className="card p-5">
+        <h3 className="text-base font-semibold mb-3">轻量模式</h3>
+        <p className="text-xs text-text-secondary mb-4">仅系统托盘运行，不显示主窗口</p>
+        <ToggleOption label="启用轻量模式" checked={settings.lightweightMode} onChange={(v) => update({ lightweightMode: v })} />
+      </section>
     </div>
   );
 }
