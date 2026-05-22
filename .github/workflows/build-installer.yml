@@ -2,6 +2,7 @@ name: Build Installers
 on:
   repository_dispatch:
     types: [build-installer]
+  workflow_dispatch:
 
 env:
   NODE_VERSION: '22'

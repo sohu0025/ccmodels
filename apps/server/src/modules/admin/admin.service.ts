@@ -230,6 +230,12 @@ export class AdminService {
 
       if (!res.ok) {
         const err = await res.text();
+        if (res.status === 403) {
+          return {
+            success: false,
+            message: `GitHub Token 权限不足。请在 https://github.com/settings/tokens 创建 Token，权限需要勾选 "Actions: Read and Write"（或经典 Token 勾选 repo/public_repo）`,
+          };
+        }
         return { success: false, message: `GitHub API 错误 (${res.status}): ${err}` };
       }
 
