@@ -52,6 +52,9 @@ PORT=3000
 # CORS（Web 页面可能通过不同域名访问）
 CORS_ORIGINS=https://你的域名.com
 
+# 管理后台密码（首次 seed 时创建管理员账号）
+ADMIN_PASSWORD=设置一个安全密码
+
 # Sentry（可选）
 SENTRY_DSN=
 ```

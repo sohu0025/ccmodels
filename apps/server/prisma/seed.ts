@@ -4,11 +4,13 @@ import * as bcrypt from 'bcryptjs';
 const prisma = new PrismaClient();
 
 async function main() {
-  // Create admin user
-  const password = await bcrypt.hash('123456', 10);
-  const admin = await prisma.user.upsert({
+  // Create admin user for web admin panel
+  // Password can be set via ADMIN_PASSWORD env var (default: admin123)
+  const adminPassword = process.env.ADMIN_PASSWORD || 'admin123';
+  const password = await bcrypt.hash(adminPassword, 10);
+  await prisma.user.upsert({
     where: { email: 'admin' },
-    update: { role: 'admin' },
+    update: { password },
     create: {
       email: 'admin',
       password,
@@ -16,23 +18,10 @@ async function main() {
       role: 'admin',
     },
   });
-  console.log(`Admin user: admin / 123456`);
+  console.log(`Admin user: admin / ${adminPassword}`);
+  console.log('  Change password via ADMIN_PASSWORD env var');
 
-  // Create a regular user for testing
-  const userPassword = await bcrypt.hash('user123', 10);
-  const user = await prisma.user.upsert({
-    where: { email: 'user@cc-models.app' },
-    update: {},
-    create: {
-      email: 'user@cc-models.app',
-      password: userPassword,
-      name: 'Test User',
-      role: 'user',
-    },
-  });
-  console.log(`Test user: ${user.email} / user123`);
-
-  // Create some system providers
+  // Create default system providers
   const providers = [
     {
       name: 'DeepSeek',
@@ -45,7 +34,7 @@ async function main() {
       isActive: true,
     },
     {
-      name: 'OpenAI Official',
+      name: 'OpenAI',
       type: 'official',
       website: 'https://platform.openai.com',
       openaiApiBase: 'https://api.openai.com/v1',
@@ -55,7 +44,7 @@ async function main() {
       isActive: true,
     },
     {
-      name: 'Anthropic Official',
+      name: 'Anthropic',
       type: 'official',
       website: 'https://www.anthropic.com',
       openaiApiBase: null,
@@ -74,41 +63,6 @@ async function main() {
     });
   }
   console.log(`Created ${providers.length} system providers`);
-
-  // Create sample ads
-  const ads = [
-    {
-      id: 'seed-ad-popup',
-      type: 'popup',
-      title: 'CC Models 专业版',
-      htmlContent: '<div style="text-align:center;padding:20px"><h3>🚀 升级到 CC Models 专业版</h3><p>解锁全部 AI 供应商和高级功能</p><button style="background:#6366f1;color:white;border:none;padding:8px 24px;border-radius:6px;margin-top:12px;cursor:pointer">立即升级</button></div>',
-      textContent: '',
-      linkUrl: 'https://cc-models.app/pro',
-      width: 320,
-      height: 280,
-      enabled: 1,
-    },
-    {
-      id: 'seed-ad-corner',
-      type: 'corner',
-      title: '新用户优惠',
-      htmlContent: '<div style="padding:10px;font-size:13px">🎉 新用户首月 5 折</div>',
-      textContent: '新用户首月5折',
-      linkUrl: 'https://cc-models.app/promo',
-      width: 180,
-      height: 60,
-      enabled: 1,
-    },
-  ];
-
-  for (const ad of ads) {
-    await prisma.ad.upsert({
-      where: { id: ad.id },
-      update: ad,
-      create: ad,
-    });
-  }
-  console.log(`Created ${ads.length} sample ads`);
 }
 
 main()

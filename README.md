@@ -43,12 +43,13 @@
 - **多主题** — 浅色/深色主题切换
 - **国际化** — 中英文界面
 
-### 云端同步 (NestJS)
+### 云端管理后台（可选）
 
-- **用户认证** — 注册/登录 JWT
-- **数据同步** — 多设备间同步使用记录和配置
-- **Web 管理面板** — 浏览器访问的同功能面板
-- **管理后台** — 供应商管理、系统设置、数据统计
+- **Web 管理面板** — 浏览器访问的后台管理界面
+- **系统供应商管理** — 增删改查系统级供应商
+- **系统设置** — 网站信息、版本号等配置
+- **数据同步** — 桌面端可选将使用数据同步到服务端
+- **广告推送** — 管理端配置广告，推送到桌面客户端
 
 ---
 
@@ -94,20 +95,19 @@
 
 ---
 
-## 自托管后端服务
+### 云端管理后台（可选）
 
-可选部署后端服务用于多设备同步和 Web 面板：
+后端服务主要用于 Web 管理面板和广告同步，桌面端核心功能完全离线可用。
 
 ```bash
-# 使用 Docker Compose（推荐）
+# 使用 Docker Compose 一键部署
 docker compose up -d
 
-# 或直接部署
-pnpm install
-pnpm --filter @ccmodels/shared build
-pnpm --filter @ccmodels/web build
-pnpm --filter @ccmodels/server build
-node apps/server/dist/main.js
+# 初始化管理员账号（首次部署执行）
+docker compose exec server npx prisma db seed
+
+# 访问 http://你的服务器IP:3000
+# 管理员账号: admin / 通过 ADMIN_PASSWORD 环境变量设置
 ```
 
 详细部署说明见 [docs/deploy-linux.md](docs/deploy-linux.md)。
