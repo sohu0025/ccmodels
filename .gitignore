@@ -22,7 +22,4 @@ build/
 .claude/worktrees/
 
 # Random loose files
-logo.png
 text.png
-apps/desktop/src/renderer/public/logo.png
-apps/desktop/src/renderer/public/text.png
