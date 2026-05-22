@@ -14,7 +14,7 @@ module.exports = {
   overrides: [
     {
       // Electron main process — deals with dynamic DB objects and config files
-      files: ["apps/desktop/src/main/**/*.ts"],
+      files: ["apps/desktop/src/**/*.ts", "apps/desktop/src/**/*.tsx"],
       rules: {
         "@typescript-eslint/no-explicit-any": "off",
       },
