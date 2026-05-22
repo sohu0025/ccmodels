@@ -93,6 +93,7 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm --filter @ccmodels/shared build
+      - run: pnpm --filter @ccmodels/server prisma:generate
       - run: pnpm --filter @ccmodels/server build
 
   package:
