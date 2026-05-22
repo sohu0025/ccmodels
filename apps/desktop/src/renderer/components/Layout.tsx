@@ -53,7 +53,7 @@ export function Layout() {
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-2">
               <img src="/logo.png" alt="CC Models" className="w-6 h-6 rounded-md" />
-              <img src="/text.png" alt="CC Models" className="h-3 w-auto" />
+              <span className="font-bold text-base tracking-tight text-text-primary">CC Models</span>
             </div>
           </div>
 
