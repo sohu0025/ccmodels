@@ -8,16 +8,20 @@ COPY package.json pnpm-lock.yaml pnpm-workspace.yaml tsconfig.base.json ./
 COPY packages/shared/package.json ./packages/shared/
 COPY apps/server/package.json ./apps/server/
 COPY apps/server/tsconfig.json ./apps/server/
+COPY apps/web/package.json ./apps/web/
+COPY apps/web/tsconfig.json ./apps/web/
 
 RUN pnpm install --frozen-lockfile
 
 COPY packages/shared ./packages/shared
 COPY apps/server/src ./apps/server/src
 COPY apps/server/prisma ./apps/server/prisma
+COPY apps/web ./apps/web
 
 RUN pnpm --filter @ccmodels/shared build
 RUN cd apps/server && npx prisma generate
 RUN pnpm --filter @ccmodels/server build
+RUN pnpm --filter @ccmodels/web build
 
 # Stage 2: Production
 FROM node:22-alpine
@@ -36,6 +40,7 @@ RUN pnpm install --frozen-lockfile --prod 2>/dev/null || pnpm install --frozen-l
 
 COPY --from=builder /app/apps/server/dist ./apps/server/dist
 COPY --from=builder /app/apps/server/prisma ./apps/server/prisma
+COPY --from=builder /app/apps/web/dist ./apps/web/dist
 
 RUN cd apps/server && npx prisma generate
 
