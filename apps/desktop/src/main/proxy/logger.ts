@@ -24,7 +24,7 @@ export interface SessionKey {
   cliTool: string;
 }
 
-let activeSessions = new Map<string, { sessionId: string; lastActivity: number }>();
+const activeSessions = new Map<string, { sessionId: string; lastActivity: number }>();
 const SESSION_TIMEOUT_MS = 30 * 60 * 1000; // 30 minutes
 
 function getSessionKey(key: SessionKey): string {

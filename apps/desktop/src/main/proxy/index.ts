@@ -51,7 +51,7 @@ export function startProxy() {
     const settings = getSettings();
     const port = settings.proxyPort;
     server = http.createServer((req, res) => {
-        requestCount++;
+        _requestCount++;
         incrementRequestCount();
         const startTime = Date.now();
         // Read request body (with size limit)

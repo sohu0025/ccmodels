@@ -19,5 +19,15 @@ module.exports = {
         "@typescript-eslint/no-explicit-any": "off",
       },
     },
+    {
+      // Proxy file reconstructed from JS — skip all type checks
+      files: ["apps/desktop/src/main/proxy/**/*.ts"],
+      rules: {
+        "@typescript-eslint/ban-ts-comment": "off",
+        "@typescript-eslint/no-unused-vars": "off",
+        "no-empty": "off",
+        "no-useless-escape": "off",
+      },
+    },
   ],
 };

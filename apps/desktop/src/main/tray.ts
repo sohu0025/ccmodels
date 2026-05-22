@@ -232,7 +232,7 @@ async function showPopup(): Promise<void> {
         if (data.websiteUrl) websiteUrl = data.websiteUrl;
       }
     }
-  } catch {}
+  } catch { /* ignore */ }
 
   const maxMenuH = wa.height - 40;
   w.loadURL('data:text/html;charset=utf-8,' + encodeURIComponent(buildHtml(websiteUrl, maxMenuH)));

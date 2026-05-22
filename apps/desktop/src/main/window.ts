@@ -1,11 +1,10 @@
-import { BrowserWindow, app, screen, nativeImage } from 'electron';
+import { BrowserWindow, app, nativeImage } from 'electron';
 import path from 'node:path';
 import { DEFAULT_DEV_SERVER_PORT } from '@ccmodels/shared';
 
 const isDev = !app.isPackaged;
 
 export function createMainWindow(): BrowserWindow {
-  const { width: screenWidth } = screen.getPrimaryDisplay().workAreaSize;
 
   // Set window icon from resources
   const iconPath = app.isPackaged
