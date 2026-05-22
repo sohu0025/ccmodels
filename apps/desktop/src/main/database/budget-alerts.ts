@@ -24,7 +24,7 @@ export function getBudgetStatus(): BudgetStatus {
   `).get(`${month}%`) as any;
   const totalCost = costRow.total;
 
-  let alert = getDb().prepare('SELECT * FROM budget_alerts WHERE month = ?').get(month) as any;
+  const alert = getDb().prepare('SELECT * FROM budget_alerts WHERE month = ?').get(month) as any;
   if (!alert) {
     const id = randomUUID();
     getDb().prepare(`
