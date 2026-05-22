@@ -176,7 +176,7 @@ CLI 工具 (Claude Code / Codex / Gemini CLI ...)
 
 ```bash
 # 克隆
-git clone https://github.com/你的用户名/cc-models.git
+git clone https://github.com/sohu0025/ccmodels.git
 cd cc-models
 
 # 安装依赖
