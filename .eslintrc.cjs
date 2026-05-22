@@ -11,4 +11,13 @@ module.exports = {
     "@typescript-eslint/consistent-type-imports": "error",
   },
   ignorePatterns: ["dist/", "node_modules/", ".turbo/"],
+  overrides: [
+    {
+      // Electron main process — deals with dynamic DB objects and config files
+      files: ["apps/desktop/src/main/**/*.ts"],
+      rules: {
+        "@typescript-eslint/no-explicit-any": "off",
+      },
+    },
+  ],
 };

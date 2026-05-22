@@ -147,7 +147,7 @@ async function callModelAPI(
 
               if (apiType === 'anthropic') {
                 // Anthropic Messages API: { content: [{ type: 'text', text: '...' }], usage: { input_tokens, output_tokens } }
-                content = json.content?.map((b: any) => b.text || '').join('\n') ?? '';
+                content = json.content?.map((b: Record<string, unknown>) => (b.text as string) || '').join('\n') ?? '';
                 promptTokens = json.usage?.input_tokens ?? 0;
                 completionTokens = json.usage?.output_tokens ?? 0;
               } else {
@@ -210,12 +210,13 @@ async function callModelAPI(
       req.write(body);
       req.end();
     });
-  } catch (err: any) {
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
     return {
       modelId,
       providerId: provider.id,
       content: '',
-      error: err.message,
+      error: msg,
       latencyMs: Date.now() - startTime,
       tokens: 0,
       cost: 0,

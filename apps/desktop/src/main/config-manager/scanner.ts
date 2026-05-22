@@ -11,12 +11,12 @@ function isCliInstalled(toolName: string): boolean {
   const knownPaths: string[] = [];
   
   switch (toolName) {
-    case 'claude-code':
+    case 'claude-code': {
       // Check common installation paths for Claude Code
       const localAppData = process.env.LOCALAPPDATA || '';
       const appData = process.env.APPDATA || '';
       const userProfile = process.env.USERPROFILE || '';
-      
+
       knownPaths.push(
         path.join(localAppData, 'Programs', 'claude-code', 'claude.exe'),
         path.join(appData, 'npm', 'claude.cmd'),
@@ -25,6 +25,7 @@ function isCliInstalled(toolName: string): boolean {
         path.join(userProfile, '.claude')
       );
       break;
+    }
     case 'gemini-cli':
       // Directory is .gemini, not .gemini-cli
       knownPaths.push(

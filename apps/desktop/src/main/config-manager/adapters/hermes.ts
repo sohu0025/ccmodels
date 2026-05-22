@@ -1,8 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const yaml = require('js-yaml');
+import yaml from 'js-yaml';
 import type { CliAdapter, CliProxyOptions } from './index';
 
 const HOME = os.homedir();

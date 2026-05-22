@@ -1,5 +1,6 @@
 import chokidar, { type FSWatcher } from 'chokidar';
 import path from 'node:path';
+import os from 'node:os';
 import { getCliTools } from '@ccmodels/shared';
 
 let watcher: FSWatcher | null = null;
@@ -15,14 +16,14 @@ export function initConfigWatcher(onChange: () => void): void {
 
   // Exclude the user's home directory root — changes there (e.g. setx env var writes)
   // trigger infinite re-apply loops since gemini-cli config paths include ~/.env.
-  const homeDir = require('node:os').homedir();
+  const homeDir = os.homedir();
   const watchPatterns = [...watchDirs].filter((d) => d && !d.includes('undefined') && d !== homeDir);
 
   watcher = chokidar.watch(watchPatterns, {
     ignoreInitial: true,
     depth: 0,
     // Only watch for config files
-    ignored: /(^|[\/\\])\..(?!claude|codex|gemini|opencode|openclaw|hermes)/,
+    ignored: /(^|[/\\])\..(?!claude|codex|gemini|opencode|openclaw|hermes)/,
   });
 
   watcher.on('add', onChange);

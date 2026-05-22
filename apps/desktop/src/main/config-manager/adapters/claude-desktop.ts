@@ -64,8 +64,8 @@ export const claudeDesktopAdapter: CliAdapter = {
     if (result.api) {
       const api = result.api as Record<string, unknown>;
       if (typeof api.baseUrl === 'string' && api.baseUrl.startsWith('http://127.0.0.1:')) {
-        const { baseUrl, ...rest } = api;
-        result.api = Object.keys(rest).length > 0 ? rest : undefined;
+        delete (api as Record<string, unknown>).baseUrl;
+        result.api = Object.keys(api).length > 0 ? api : undefined;
       }
     }
 
@@ -76,8 +76,8 @@ export const claudeDesktopAdapter: CliAdapter = {
       if (ccSwitch && typeof ccSwitch.url === 'string' && ccSwitch.url.startsWith('http://127.0.0.1:')) {
         delete ccSwitch.url;
         if (Object.keys(ccSwitch).length === 0) {
-          const { 'cc-switch': _, ...rest } = mcpServers;
-          result.mcpServers = Object.keys(rest).length > 0 ? rest : undefined;
+          delete mcpServers['cc-switch'];
+          result.mcpServers = Object.keys(mcpServers).length > 0 ? mcpServers : undefined;
         }
       }
     }

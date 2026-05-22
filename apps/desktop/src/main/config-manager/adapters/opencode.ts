@@ -57,7 +57,6 @@ export const opencodeAdapter: CliAdapter = {
     const newProviders: Record<string, unknown> = {};
     if (oldProviders && typeof oldProviders === 'object') {
       for (const [id, prov] of Object.entries(oldProviders)) {
-        const p = prov as any;
         if (savedBaseUrls[id]) {
           // Non-proxy provider — keep it as-is
           newProviders[id] = prov;

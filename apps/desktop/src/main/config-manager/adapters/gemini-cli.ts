@@ -14,14 +14,14 @@ const isWin = process.platform === 'win32';
 function setWinUserEnv(key: string, value: string): void {
   try {
     spawn('setx', [key, value], { stdio: 'ignore', windowsHide: true, detached: true }).unref();
-  } catch {}
+  } catch { /* ignore */ }
 }
 
 /** Delete a user-level environment variable on Windows. */
 function deleteWinUserEnv(key: string): void {
   try {
     spawn('REG', ['delete', 'HKCU\\Environment', '/F', '/V', key], { stdio: 'ignore', windowsHide: true, detached: true }).unref();
-  } catch {}
+  } catch { /* ignore */ }
 }
 
 export const geminiCliAdapter: CliAdapter = {
