@@ -2,6 +2,12 @@
   "name": "@ccmodels/desktop",
   "productName": "CC Models",
   "version": "0.1.0",
+  "description": "CC Models - AI model proxy gateway and management tool",
+  "homepage": "https://github.com/sohu0025/ccmodels",
+  "author": {
+    "name": "CC Models",
+    "email": "sohu0025@users.noreply.github.com"
+  },
   "private": true,
   "main": "dist/main/index.js",
   "scripts": {
