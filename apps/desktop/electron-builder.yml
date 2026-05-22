@@ -36,6 +36,7 @@ mac:
   category: public.app-category.developer-tools
 
 linux:
+  artifactName: ${productName}-${version}-${arch}.${ext}
   target:
     - target: AppImage
       arch:
