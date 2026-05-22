@@ -53,7 +53,7 @@ export const api = {
       get: (key: string) => request(`/api/admin/settings/${key}`),
       update: (key: string, value: string) => request(`/api/admin/settings/${key}`, { method: 'PUT', body: JSON.stringify({ key, value }) }),
     },
-    buildInstaller: () => request('/api/admin/build-installer', { method: 'POST' }),
+    buildInstaller: () => request('/api/admin/build-installer', { method: 'POST', body: JSON.stringify({}) }),
     buildInstallerStatus: () => request('/api/admin/build-installer/status'),
   },
 };
