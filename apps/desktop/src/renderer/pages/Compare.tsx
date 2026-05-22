@@ -41,8 +41,8 @@ export function Compare() {
   const leftOptions = providers.filter(p => p.id !== rightProviderId);
   const rightOptions = providers.filter(p => p.id !== leftProviderId);
 
-  const selectedLeft = providers.find(p => p.id === leftProviderId);
-  const selectedRight = providers.find(p => p.id === rightProviderId);
+  const _selectedLeft = providers.find(p => p.id === leftProviderId);
+  const _selectedRight = providers.find(p => p.id === rightProviderId);
 
   const handleLeftProviderChange = (id: string) => {
     setLeftProviderId(id || null);

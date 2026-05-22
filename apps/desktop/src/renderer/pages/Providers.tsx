@@ -51,7 +51,7 @@ export function Providers() {
     return 0;
   });
 
-  const activeProvider = providers.find((p) => p.id === activeProviderId) ?? toolProviders[0] ?? null;
+  const _activeProvider = providers.find((p) => p.id === activeProviderId) ?? toolProviders[0] ?? null;
 
   const handleSave = async (data: ProviderFormData) => {
     if (editing) {

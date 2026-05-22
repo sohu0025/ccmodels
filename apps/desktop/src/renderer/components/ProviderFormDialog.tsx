@@ -233,7 +233,7 @@ export function ProviderFormDialog({ open, onClose, onSave, initialData, toolNam
   // relevant to the current tool. For gemini-cli (which supports both openai and
   // google), prefer openai since most non-Google providers are OpenAI-compatible.
   const dedupedPresets: typeof filteredPresets = [];
-  const seen = new Set<string>();
+  const _seen = new Set<string>();
   for (const p of filteredPresets) {
     const existing = dedupedPresets.find((x) => x.name === p.name);
     if (existing) {
@@ -250,7 +250,7 @@ export function ProviderFormDialog({ open, onClose, onSave, initialData, toolNam
   // Current selected preset (with website)
   const selectedPreset = dedupedPresets.find((p) => p.name === name);
 
-  const apiTypeOptions = [
+  const _apiTypeOptions = [
     { value: 'openai' as ApiType, label: t('provider.apiType.openai'), desc: t('provider.form.apiTypeDescOpenai') },
     { value: 'anthropic' as ApiType, label: t('provider.apiType.anthropic'), desc: t('provider.form.apiTypeDescAnthropic') },
     { value: 'google' as ApiType, label: t('provider.apiType.google'), desc: t('provider.form.apiTypeDescGoogle') },

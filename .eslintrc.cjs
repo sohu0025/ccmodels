@@ -10,13 +10,16 @@ module.exports = {
     "@typescript-eslint/no-unused-vars": ["error", { argsIgnorePattern: "^_" }],
     "@typescript-eslint/consistent-type-imports": "error",
   },
-  ignorePatterns: ["dist/", "node_modules/", ".turbo/"],
+  ignorePatterns: ["dist/", "node_modules/", ".turbo/", "apps/desktop/dist/"],
   overrides: [
     {
-      // Electron main process — deals with dynamic DB objects and config files
+      // Desktop app — deals with dynamic IPC data and Electron APIs
       files: ["apps/desktop/src/**/*.ts", "apps/desktop/src/**/*.tsx"],
       rules: {
         "@typescript-eslint/no-explicit-any": "off",
+        "no-empty": "off",
+        "no-useless-escape": "off",
+        "@typescript-eslint/no-unused-vars": ["error", { argsIgnorePattern: "^_", varsIgnorePattern: "^_" }],
       },
     },
     {

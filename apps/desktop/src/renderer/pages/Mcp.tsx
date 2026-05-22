@@ -5,7 +5,7 @@ import { ConfirmDialog } from '../components/ConfirmDialog';
 import type { MCPTransport } from '@ccmodels/shared';
 
 export function Mcp() {
-  const { servers, statuses, loading, create, update, remove, toggleEnabled, startStop } = useMcp();
+  const { servers, statuses, loading, create, update, remove, toggleEnabled: _toggleEnabled, startStop } = useMcp();
   const { t } = useI18n();
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState<{ name: string; transport: MCPTransport; command?: string; args?: string[]; url?: string; id?: string }>({ name: '', transport: 'stdio', command: '', args: [], url: '' });

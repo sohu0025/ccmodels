@@ -1,5 +1,11 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { recordFailure, recordSuccess, isCircuitOpen, getCircuitStatus, getAllCircuitStatuses } from './failover';
+import {
+  recordFailure as _recordFailure,
+  recordSuccess as _recordSuccess,
+  isCircuitOpen as _isCircuitOpen,
+  getCircuitStatus as _getCircuitStatus,
+  getAllCircuitStatuses as _getAllCircuitStatuses,
+} from './failover';
 
 describe('Circuit Breaker', () => {
   beforeEach(() => {

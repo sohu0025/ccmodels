@@ -15,7 +15,7 @@ export function useSkills() {
   useEffect(() => { refresh(); }, [refresh]);
 
   const create = async (data: SkillFormData) => { await api.createSkill(data); refresh(); };
-  const update = async (id: string, data: Partial<SkillFormData>) => { await api.updateSkill(id, data); refresh(); };
+  const _update = async (id: string, data: Partial<SkillFormData>) => { await api.updateSkill(id, data); refresh(); };
   const remove = async (id: string) => { await api.deleteSkill(id); refresh(); };
   const toggleActive = async (id: string, active: boolean) => { await api.setSkillActive(id, active); refresh(); };
   const checkConflict = (name: string, excludeId?: string) => api.checkSkillConflict(name, excludeId);

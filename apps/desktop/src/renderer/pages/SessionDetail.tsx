@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState as _useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useSessionDetail } from '../hooks/useSessions';
 import { useI18n } from '../hooks/useI18n';

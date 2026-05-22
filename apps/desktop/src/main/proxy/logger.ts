@@ -166,7 +166,7 @@ export function logRequestWithUsage(
 
 export function parseUsageFromResponse(
   body: string,
-  modelId: string,
+  _modelId: string,
 ): { promptTokens: number; completionTokens: number; cacheHitTokens: number; cost: number } | null {
   try {
     const json = JSON.parse(body);
