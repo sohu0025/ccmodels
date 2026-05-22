@@ -1,4 +1,5 @@
-import { ipcMain, BrowserWindow, shell, app } from 'electron';
+import { ipcMain, shell, app } from 'electron';
+import type { BrowserWindow } from 'electron';
 import * as providerDb from './database/providers';
 import * as settingDb from './database/settings';
 import { PRESET_PROVIDERS, API_TYPE_TOOLS } from '@ccmodels/shared';
@@ -17,6 +18,7 @@ import * as syncQueueDb from './database/sync-queue';
 import * as compareDb from './database/compare-tests';
 import * as recommendDb from './database/recommendations';
 import * as adDb from './database/ads';
+import type { AdRecord } from './database/ads';
 import { startMcpServer, stopMcpServer, getMcpProcessStatus } from './mcp-manager';
 import { triggerSync, getSyncState } from './sync';
 import { runCompareTest } from './compare-runner';
@@ -51,7 +53,7 @@ export function registerIpcHandlers(_mainWindow: BrowserWindow): void {
         testHeaders['Authorization'] = `Bearer ${provider.apiKey}`;
       }
       const testPath = provider.apiType === 'google' ? `${provider.apiBase}/v1beta/models` : `${provider.apiBase}/models`;
-      const res = await fetch(testPath, {
+      await fetch(testPath, {
         headers: testHeaders,
         signal: AbortSignal.timeout(10000),
       });
@@ -134,7 +136,7 @@ export function registerIpcHandlers(_mainWindow: BrowserWindow): void {
           await startProxy();
           proxyOk = true;
           console.log('[CC Models] Proxy fallback to port 15721');
-        } catch {}
+        } catch { /* ignore */ }
       }
     }
     // Always update all CLI configs, even if proxy restart failed
@@ -232,7 +234,7 @@ export function registerIpcHandlers(_mainWindow: BrowserWindow): void {
     try {
       const list = await fetchAdsFromServer();
       if (list) return list;
-    } catch {}
+    } catch { /* ignore */ }
     return safeCall(() => adDb.getAllAds(), []);
   });
   ipcMain.handle('ad:get', (_e, id: string) => safeCall(() => adDb.getAdById(id), null));
@@ -243,7 +245,7 @@ export function registerIpcHandlers(_mainWindow: BrowserWindow): void {
     try {
       const list = await fetchAdsFromServer();
       if (list) return list.filter((a) => a.type === type);
-    } catch {}
+    } catch { /* ignore */ }
     return safeCall(() => adDb.getAdsByType(type), []);
   });
 
@@ -291,10 +293,10 @@ function safeCall<T>(fn: () => T, fallback: any = undefined): T {
   }
 }
 
-function normalizeServerAd(item: any): import('./database/ads').AdRecord {
+function normalizeServerAd(item: any): AdRecord {
   return {
     id: item.id,
-    type: item.type as import('./database/ads').AdRecord['type'],
+    type: item.type as AdRecord['type'],
     title: item.title ?? '',
     htmlContent: item.htmlContent ?? '',
     textContent: item.textContent ?? '',
@@ -307,7 +309,7 @@ function normalizeServerAd(item: any): import('./database/ads').AdRecord {
   };
 }
 
-async function fetchAdsFromServer(): Promise<import('./database/ads').AdRecord[] | null> {
+async function fetchAdsFromServer(): Promise<AdRecord[] | null> {
   const settings = settingDb.getSettings();
   const serverUrl = settings.serverUrl;
   try {
@@ -316,6 +318,6 @@ async function fetchAdsFromServer(): Promise<import('./database/ads').AdRecord[]
       const data = await res.json() as any[];
       return data.map((item: any) => normalizeServerAd(item));
     }
-  } catch {}
+  } catch { /* ignore */ }
   return null;
 }

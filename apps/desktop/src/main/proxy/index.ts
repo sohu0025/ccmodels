@@ -9,7 +9,7 @@ import { recordFailure, recordSuccess } from "./failover";
 import { addSessionMessage } from "../database/sessions";
 import { getOrCreateSession, logRequestWithUsage, logRequest, parseUsageFromResponse } from "./logger";
 let server = null;
-let requestCount = 0;
+let _requestCount = 0;
 function requestCountTodayKey() {
     return new Date().toISOString().slice(0, 10);
 }
@@ -44,7 +44,7 @@ export function getTodayRequestCount() {
                 return data.count;
         }
     }
-    catch { }
+    catch { /* ignore */ }
     return 0;
 }
 export function startProxy() {
@@ -778,7 +778,7 @@ function extractModel(body, path) {
             if (json.model)
                 return json.model;
         }
-        catch { }
+        catch { /* ignore */ }
     }
     // Google API format: model is in URL path like /v1beta/models/gemini-2.0-flash:generateContent
     if (path) {
@@ -1477,7 +1477,7 @@ function extractFromAnthropicSSE(body) {
                 }
             }
         }
-        catch { }
+        catch { /* ignore */ }
     }
     return { text, usage };
 }
@@ -1554,7 +1554,7 @@ function extractUserMessage(body, isResponses) {
             }
         }
     }
-    catch { }
+    catch { /* ignore */ }
     return '';
 }
 /** Strip <system-reminder> and other system-level tags from stored message content */
@@ -1617,7 +1617,7 @@ function extractAssistantMessage(body, isResponses) {
             }
         }
     }
-    catch { }
+    catch { /* ignore */ }
     // Try SSE format (streaming response): accumulate delta.content from data: lines
     try {
         const lines = body.split('\n');

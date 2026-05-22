@@ -1,4 +1,5 @@
-import { ChildProcess, spawn } from 'node:child_process';
+import { spawn } from 'node:child_process';
+import type { ChildProcess } from 'node:child_process';
 import { getAllMcpServers } from '../database/mcp';
 import type { MCPServer } from '@ccmodels/shared';
 

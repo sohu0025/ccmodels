@@ -105,7 +105,7 @@ function trackDevice(): void {
     } else {
       fetch(`${serverUrl}/api/stats/heartbeat`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ deviceId: row!.value }) }).catch(() => {});
     }
-  } catch {} // Non-critical
+  } catch { /* Non-critical */ }
 }
 
 async function checkForUpdatesOnStartup(): Promise<void> {
