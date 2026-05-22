@@ -25,7 +25,7 @@ export function Sidebar() {
         <div className="flex items-center gap-2.5">
           <img src="/logo.png" alt="CC Models" className="w-7 h-7 rounded-lg" />
           <div>
-            <span className="font-bold text-base tracking-tight text-text-primary block">CC Models</span>
+            <img src="/text.png" alt="CC Models" className="h-3.5 w-auto" />
             <p className="text-xs text-text-tertiary leading-none">{t('sidebar.subtitle')}</p>
           </div>
         </div>
