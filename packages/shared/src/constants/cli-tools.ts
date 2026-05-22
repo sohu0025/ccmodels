@@ -1,7 +1,4 @@
-import os from 'node:os';
 import path from 'node:path';
-
-const HOME = os.homedir();
 
 export interface CliToolDefinition {
   name: string;
@@ -11,7 +8,20 @@ export interface CliToolDefinition {
   fieldsToModify: Record<string, string>;
 }
 
-export const CLI_TOOLS: CliToolDefinition[] = [
+let _cliTools: CliToolDefinition[] | null = null;
+
+function getHomeDir(): string {
+  try {
+    return require('node:os').homedir();
+  } catch {
+    return '~'; // Fallback for browser/renderer context
+  }
+}
+
+export function getCliTools(): CliToolDefinition[] {
+  if (_cliTools) return _cliTools;
+  const HOME = getHomeDir();
+  _cliTools = [
   {
     name: 'claude-code',
     displayName: 'Claude Code',
@@ -22,8 +32,19 @@ export const CLI_TOOLS: CliToolDefinition[] = [
     configFormat: 'json',
     fieldsToModify: {
       'provider.baseUrl': 'http://127.0.0.1:15721',
-      'apiKeyHelper': 'ccswitch',
+      'apiKeyHelper': 'ccmodels',
     },
+  },
+  {
+    name: 'claude-desktop',
+    displayName: 'Claude Desktop',
+    configPaths: [
+      process.env.APPDATA ? path.join(process.env.APPDATA, 'Claude', 'claude_desktop_config.json') : '',
+      path.join(HOME, 'Library', 'Application Support', 'Claude', 'claude_desktop_config.json'),
+      path.join(HOME, '.config', 'Claude', 'claude_desktop_config.json'),
+    ].filter(Boolean),
+    configFormat: 'json',
+    fieldsToModify: { 'api.baseUrl': 'http://127.0.0.1:15721' },
   },
   {
     name: 'codex',
@@ -35,29 +56,33 @@ export const CLI_TOOLS: CliToolDefinition[] = [
   {
     name: 'gemini-cli',
     displayName: 'Gemini CLI',
-    configPaths: [path.join(HOME, '.gemini', 'config.json')],
+    configPaths: [path.join(HOME, '.gemini', '.env'), path.join(HOME, '.env')],
     configFormat: 'json',
-    fieldsToModify: { 'apiEndpoint': 'http://127.0.0.1:15721' },
+    fieldsToModify: { GOOGLE_GEMINI_BASE_URL: 'http://127.0.0.1:15721' },
   },
   {
     name: 'opencode',
     displayName: 'OpenCode',
-    configPaths: [path.join(HOME, '.opencode', 'config.json')],
+    configPaths: [path.join(HOME, '.config', 'opencode', 'opencode.jsonc')],
     configFormat: 'json',
-    fieldsToModify: { 'apiBase': 'http://127.0.0.1:15721' },
+    fieldsToModify: {
+      'provider.*.options.baseURL': 'http://127.0.0.1:15721',
+    },
   },
   {
     name: 'openclaw',
     displayName: 'OpenClaw',
-    configPaths: [path.join(HOME, '.openclaw', 'config.yaml')],
-    configFormat: 'yaml',
-    fieldsToModify: { 'api.base_url': 'http://127.0.0.1:15721' },
+    configPaths: [path.join(HOME, '.openclaw', 'openclaw.json')],
+    configFormat: 'json',
+    fieldsToModify: { 'models.providers.*.baseUrl': 'http://127.0.0.1:15721/v1' },
   },
   {
     name: 'hermes',
     displayName: 'Hermes Agent',
-    configPaths: [path.join(HOME, '.hermes', 'config.json')],
-    configFormat: 'json',
-    fieldsToModify: { 'apiBase': 'http://127.0.0.1:15721' },
+    configPaths: [path.join(HOME, '.hermes', 'config.yaml')],
+    configFormat: 'yaml',
+    fieldsToModify: { 'providers.*.api_base': 'http://127.0.0.1:15721' },
   },
-];
+  ];
+  return _cliTools;
+}

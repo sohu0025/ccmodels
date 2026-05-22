@@ -16,3 +16,13 @@ Thumbs.db
 build/
 .env.*
 .cache/
+
+# Personal Claude config
+.claude/
+.claude/worktrees/
+
+# Random loose files
+logo.png
+text.png
+apps/desktop/src/renderer/public/logo.png
+apps/desktop/src/renderer/public/text.png

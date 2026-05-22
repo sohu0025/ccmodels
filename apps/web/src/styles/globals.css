@@ -1,4 +1,21 @@
 @import "tailwindcss";
+@plugin "daisyui";
+
+@theme {
+  --color-bg-primary: #f5f5f7;
+  --color-bg-secondary: #f0f0f2;
+  --color-bg-card: #ffffff;
+  --color-bg-tertiary: #f5f5f5;
+  --color-text-primary: #1d1d1f;
+  --color-text-secondary: #86868b;
+  --color-text-tertiary: #b0b0b5;
+  --color-border: rgba(0, 0, 0, 0.06);
+  --color-accent: #0071e3;
+  --color-accent-hover: #0077ed;
+  --color-success: #34c759;
+  --color-warning: #ff9500;
+  --color-danger: #ff3b30;
+}
 
 :root {
   --color-bg-primary: #f5f5f7;
@@ -41,6 +58,7 @@ body {
   color: var(--color-text-primary);
 }
 
+/* Sidebar — macOS Finder style */
 .sidebar {
   width: 240px;
   background: var(--color-bg-secondary);
@@ -60,8 +78,8 @@ body {
 }
 
 .sidebar-item {
-  padding: 7px 12px;
-  margin: 1px 8px;
+  padding: 7px 12px 7px 8px;
+  margin: 1px 8px 1px 4px;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -84,107 +102,40 @@ body {
   font-weight: 500;
 }
 
-.card {
-  background: var(--color-bg-card);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid var(--color-border);
-  border-radius: 12px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
-}
-
-.input {
-  background: var(--color-bg-card);
-  border: 1px solid var(--color-border);
-  border-radius: 8px;
-  padding: 8px 12px;
-  font-size: 13px;
-  color: var(--color-text-primary);
-  transition: border-color 0.12s ease;
-  width: 100%;
-  outline: none;
-}
-
-.input:focus {
-  border-color: var(--color-accent);
-  box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.15);
-}
-
-.btn-primary {
-  background: var(--color-accent);
-  color: white;
-  font-weight: 500;
-  border-radius: 8px;
-  padding: 8px 16px;
-  font-size: 13px;
-  transition: background-color 0.12s ease;
-  border: none;
-  cursor: pointer;
-}
-
-.btn-primary:hover {
-  background: var(--color-accent-hover);
-}
-
-.stat-card {
-  background: var(--color-bg-card);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid var(--color-border);
-  border-radius: 12px;
-  padding: 20px;
-}
-
-.stat-label {
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--color-text-secondary);
-  margin-bottom: 4px;
-}
-
-.stat-value {
+/* Page section header */
+.section-title {
   font-size: 28px;
   font-weight: 700;
   letter-spacing: -0.02em;
   color: var(--color-text-primary);
+  line-height: 1.2;
 }
 
-.indicator {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  flex-shrink: 0;
+.section-subtitle {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  margin-top: 4px;
+  line-height: 1.4;
 }
 
-.indicator-success {
-  background: var(--color-success);
-  box-shadow: 0 0 6px var(--color-success);
+/* macOS style scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
 }
-
-.indicator-warning {
-  background: var(--color-warning);
-  box-shadow: 0 0 6px var(--color-warning);
+::-webkit-scrollbar-track {
+  background: transparent;
 }
-
-.indicator-danger {
-  background: var(--color-danger);
-  box-shadow: 0 0 6px var(--color-danger);
+::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.15);
+  border-radius: 3px;
 }
-
-.badge {
-  display: inline-flex;
-  align-items: center;
-  padding: 2px 8px;
-  border-radius: 999px;
-  font-size: 11px;
-  font-weight: 500;
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.25);
 }
-
-.badge-success {
-  background: rgba(52, 199, 89, 0.12);
-  color: var(--color-success);
+.dark ::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
 }
-
-.divide-border {
-  border-bottom: 1px solid var(--color-border);
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.25);
 }

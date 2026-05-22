@@ -1,6 +1,6 @@
 import { getDb } from './index';
 import { randomUUID } from 'node:crypto';
-import type { Session, SessionMessage, SessionFilter, SessionListResult } from '@ccswitch/shared';
+import type { Session, SessionMessage, SessionFilter, SessionListResult } from '@ccmodels/shared';
 
 export function createSession(cliTool: string, providerId: string, providerName: string, modelId: string): Session {
   const id = randomUUID();

@@ -1,5 +1,5 @@
 import { getDb } from './index';
-import type { UsageStats, DailyUsage, ProviderUsageSummary, ModelUsageSummary } from '@ccswitch/shared';
+import type { UsageStats, DailyUsage, ProviderUsageSummary, ModelUsageSummary } from '@ccmodels/shared';
 
 export function getUsageStats(filter: { dateFrom?: string; dateTo?: string }): UsageStats {
   const db = getDb();

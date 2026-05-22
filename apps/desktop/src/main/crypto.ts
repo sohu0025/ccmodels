@@ -2,7 +2,7 @@ import crypto from 'node:crypto';
 
 const ALGORITHM = 'aes-256-gcm';
 // Derive a consistent 32-byte key from a machine-local seed
-const KEY = crypto.scryptSync('cc-switch-local-encryption-seed-2026', 'cc-switch-salt', 32);
+const KEY = crypto.scryptSync('cc-models-local-encryption-seed-2026', 'cc-models-salt', 32);
 const IV_LENGTH = 16;
 
 export function encrypt(text: string): string {

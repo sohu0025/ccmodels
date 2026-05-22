@@ -1,12 +1,14 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
-import type { Provider } from '@ccswitch/shared';
+import type { Provider } from '@ccmodels/shared';
+import { useI18n } from '../hooks/useI18n';
 
 const api = (window as any).electronAPI;
 
 export function ProviderDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { t } = useI18n();
   const [provider, setProvider] = useState<Provider | null>(null);
   const [cliUrls, setCliUrls] = useState<Record<string, string>>({});
 
@@ -24,16 +26,16 @@ export function ProviderDetail() {
     navigate('/providers');
   };
 
-  if (!provider) return <div className="p-8 text-text-secondary">加载中...</div>;
+  if (!provider) return <div className="p-8 text-text-secondary">{t('common.loading')}</div>;
 
   return (
     <div className="p-8">
       <button onClick={() => navigate('/providers')} className="text-sm text-accent mb-4 block">
-        &larr; 返回供应商列表
+        {t('providerDetail.back')}
       </button>
-      <h2 className="text-xl font-bold mb-6">{provider.name} — CLI 端点配置</h2>
+      <h2 className="text-xl font-bold mb-6">{provider.name}{t('providerDetail.title')}</h2>
       <p className="text-sm text-text-secondary mb-6">
-        为不同 CLI 工具配置不同的 API 地址。留空则使用默认地址：{provider.apiBase}
+        {t('providerDetail.desc')}{provider.apiBase}
       </p>
 
       <div className="space-y-4 max-w-lg">
@@ -54,7 +56,7 @@ export function ProviderDetail() {
         onClick={handleSaveCliUrls}
         className="mt-6 px-4 py-2 rounded-lg bg-accent text-white text-sm font-medium hover:bg-accent-hover"
       >
-        保存端点配置
+        {t('providerDetail.save')}
       </button>
     </div>
   );

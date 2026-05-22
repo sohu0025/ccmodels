@@ -1,5 +1,5 @@
 {
-  "name": "@ccswitch/web",
+  "name": "@ccmodels/web",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -10,7 +10,8 @@
     "test:watch": "vitest"
   },
   "dependencies": {
-    "@ccswitch/shared": "workspace:*",
+    "@ccmodels/shared": "workspace:*",
+    "daisyui": "5",
     "react": "^18.3.0",
     "react-dom": "^18.3.0",
     "react-router-dom": "^6.28.0",

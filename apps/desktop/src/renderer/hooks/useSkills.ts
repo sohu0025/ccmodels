@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import type { Skill, SkillFormData } from '@ccswitch/shared';
+import type { Skill, SkillFormData } from '@ccmodels/shared';
 
 const api = (window as any).electronAPI;
 

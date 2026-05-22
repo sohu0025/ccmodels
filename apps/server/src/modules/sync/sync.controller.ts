@@ -279,6 +279,7 @@ export class SyncController {
         break;
       }
 
+
       default:
         console.warn(`[Sync] Unknown table: ${tableName}`);
         break;

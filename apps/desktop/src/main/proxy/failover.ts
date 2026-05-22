@@ -23,7 +23,7 @@ export function recordFailure(providerId: string): void {
   if (state.failures >= THRESHOLD && !state.isOpen) {
     state.isOpen = true;
     state.openSince = Date.now();
-    console.log(`[CC Switch] Circuit breaker OPEN for provider ${providerId}`);
+    console.log(`[CC Models] Circuit breaker OPEN for provider ${providerId}`);
   }
   breakers.set(providerId, state);
 }
@@ -32,7 +32,7 @@ export function recordSuccess(providerId: string): void {
   const state = breakers.get(providerId);
   if (state) {
     if (state.isOpen) {
-      console.log(`[CC Switch] Circuit breaker CLOSED for provider ${providerId}`);
+      console.log(`[CC Models] Circuit breaker CLOSED for provider ${providerId}`);
     }
     breakers.delete(providerId); // Reset on success
   }
@@ -43,7 +43,7 @@ export function isCircuitOpen(providerId: string): boolean {
   if (!state || !state.isOpen) return false;
   // Check cooldown — auto-recover after COOLDOWN_MS
   if (Date.now() - state.openSince > COOLDOWN_MS) {
-    console.log(`[CC Switch] Circuit breaker HALF-OPEN for provider ${providerId}`);
+    console.log(`[CC Models] Circuit breaker HALF-OPEN for provider ${providerId}`);
     state.isOpen = false;
     return false;
   }

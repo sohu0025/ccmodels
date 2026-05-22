@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import type { UsageStats, DailyUsage, ProviderUsageSummary, ModelUsageSummary } from '@ccswitch/shared';
+import type { UsageStats, DailyUsage, ProviderUsageSummary, ModelUsageSummary } from '@ccmodels/shared';
 
 const api = (window as any).electronAPI;
 

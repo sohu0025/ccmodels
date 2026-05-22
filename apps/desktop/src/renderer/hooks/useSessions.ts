@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import type { Session, SessionMessage, SessionFilter, SessionListResult } from '@ccswitch/shared';
+import type { Session, SessionMessage, SessionFilter, SessionListResult } from '@ccmodels/shared';
 
 const api = (window as any).electronAPI;
 

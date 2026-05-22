@@ -1,7 +1,7 @@
 import { getDb } from './index';
 import { randomUUID } from 'node:crypto';
 import { enqueueSync } from './sync-queue';
-import type { Skill, SkillFormData } from '@ccswitch/shared';
+import type { Skill, SkillFormData } from '@ccmodels/shared';
 
 interface SkillRow {
   id: string;
@@ -36,7 +36,7 @@ export function createSkill(data: SkillFormData): Skill {
   `).run(id, data.name, data.sourceUrl, JSON.stringify(data.config ?? {}), now, now);
 
   const skill = getSkillById(id)!;
-  enqueueSync('skills', id, 'create', {
+  enqueueSync('skills', id, 'INSERT', {
     id,
     name: skill.name,
     version: skill.version,
@@ -64,7 +64,7 @@ export function updateSkill(id: string, data: Partial<SkillFormData>): Skill | n
 
 export function deleteSkill(id: string): void {
   getDb().prepare('DELETE FROM skills WHERE id = ?').run(id);
-  enqueueSync('skills', id, 'delete', { id });
+  enqueueSync('skills', id, 'DELETE', { id });
 }
 
 export function setSkillActive(id: string, active: boolean): void {
@@ -73,7 +73,7 @@ export function setSkillActive(id: string, active: boolean): void {
 
   const skill = getSkillById(id);
   if (skill) {
-    enqueueSync('skills', id, 'update', {
+    enqueueSync('skills', id, 'UPDATE', {
       id,
       name: skill.name,
       isActive: skill.isActive,

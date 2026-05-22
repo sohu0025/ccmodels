@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import type { MCPServer, MCPServerFormData } from '@ccswitch/shared';
+import type { MCPServer, MCPServerFormData } from '@ccmodels/shared';
 
 const api = (window as any).electronAPI;
 

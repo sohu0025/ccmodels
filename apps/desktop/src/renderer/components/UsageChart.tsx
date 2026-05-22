@@ -2,7 +2,7 @@ import {
   BarChart, Bar, LineChart, Line, PieChart, Pie, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
 } from 'recharts';
-import type { DailyUsage, ProviderUsageSummary } from '@ccswitch/shared';
+import type { DailyUsage, ProviderUsageSummary } from '@ccmodels/shared';
 
 const COLORS = ['#6366f1', '#22c55e', '#f59e0b', '#ef4444', '#3b82f6', '#8b5cf6', '#ec4899'];
 

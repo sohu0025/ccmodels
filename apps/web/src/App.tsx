@@ -1,20 +1,14 @@
 import { useState, useEffect } from 'react';
-import { Layout } from './components/Layout';
-import { Dashboard } from './pages/Dashboard';
-import { Usage } from './pages/Usage';
-import { Sessions } from './pages/Sessions';
-import { SessionDetail } from './pages/SessionDetail';
-import { Settings } from './pages/Settings';
-import { Compare } from './pages/Compare';
+import { AdminLayout } from './components/AdminLayout';
+import { AdminDashboard } from './pages/AdminDashboard';
+import { AdminProviders } from './pages/AdminProviders';
+import { AdminAds } from './pages/AdminAds';
+import { AdminSettings } from './pages/AdminSettings';
 import { api, setToken } from './api';
 
-type AuthMode = 'login' | 'register';
-
-function LoginPage() {
-  const [mode, setMode] = useState<AuthMode>('login');
+function LoginPage({ onLogin }: { onLogin: () => void }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [name, setName] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -22,17 +16,14 @@ function LoginPage() {
     e.preventDefault();
     setError('');
     setLoading(true);
-
     try {
-      const res = mode === 'login'
-        ? await api.auth.login(email, password)
-        : await api.auth.register(email, password, name);
-
+      const res = await api.auth.login(email, password);
       setToken(res.token);
       localStorage.setItem('auth_token', res.token);
-      window.location.reload();
+      localStorage.setItem('auth_user', JSON.stringify(res.user));
+      onLogin();
     } catch (err: any) {
-      setError(err.response?.data?.message ?? err.message ?? '操作失败');
+      setError(err.response?.data?.message ?? err.message ?? '登录失败');
     } finally {
       setLoading(false);
     }
@@ -40,59 +31,53 @@ function LoginPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-bg-primary">
-      <div className="card p-8 w-full max-w-md mx-4">
-        <h1 className="text-2xl font-bold tracking-tight mb-1">CC Switch</h1>
-        <p className="text-sm text-text-secondary mb-6">Web Dashboard — {mode === 'login' ? '登录' : '注册'}</p>
+      <div className="card bg-white/80 backdrop-blur-xl border border-border/60 shadow-lg p-8 w-full max-w-md mx-4">
+        <div className="text-center mb-8">
+          <div className="w-12 h-12 rounded-xl bg-accent flex items-center justify-center mx-auto mb-4">
+            <span className="text-white text-lg font-bold">CC</span>
+          </div>
+          <h1 className="text-2xl font-bold tracking-tight text-text-primary">CC Models</h1>
+          <p className="text-sm text-text-secondary mt-1">管理后台</p>
+        </div>
 
         {error && (
           <div className="mb-4 p-3 rounded-xl bg-danger/10 text-danger text-sm">{error}</div>
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          {mode === 'register' && (
+          <div>
+            <label className="text-xs font-medium text-text-secondary mb-1.5 block">账号</label>
             <input
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="昵称"
-              className="input w-full"
+              type="text"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="admin"
+              required
+              className="input w-full bg-white border-border/60 focus:border-accent rounded-lg px-3 py-2.5 text-sm outline-none transition-colors"
             />
-          )}
-          <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="邮箱"
-            required
-            className="input w-full"
-          />
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder="密码（至少6位）"
-            required
-            minLength={6}
-            className="input w-full"
-          />
-          <button type="submit" disabled={loading} className="btn-primary w-full disabled:opacity-50">
-            {loading ? '处理中...' : (mode === 'login' ? '登录' : '注册')}
+          </div>
+          <div>
+            <label className="text-xs font-medium text-text-secondary mb-1.5 block">密码</label>
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="输入密码"
+              required
+              minLength={6}
+              className="input w-full bg-white border-border/60 focus:border-accent rounded-lg px-3 py-2.5 text-sm outline-none transition-colors"
+            />
+          </div>
+          <button type="submit" disabled={loading} className="btn bg-accent text-white w-full h-10 rounded-lg font-medium text-sm hover:bg-accent-hover transition-colors disabled:opacity-50">
+            {loading ? '登录中...' : '登录'}
           </button>
         </form>
-
-        <div className="mt-5 text-center text-sm text-text-secondary">
-          {mode === 'login' ? (
-            <>还没有账号？<button onClick={() => setMode('register')} className="text-accent">注册</button></>
-          ) : (
-            <>已有账号？<button onClick={() => setMode('login')} className="text-accent">登录</button></>
-          )}
-        </div>
       </div>
     </div>
   );
 }
 
-function PageRouter() {
-  const path = window.location.pathname;
+export function App() {
   const [token, setLocalToken] = useState<string | null>(null);
   const [checking, setChecking] = useState(true);
 
@@ -106,29 +91,21 @@ function PageRouter() {
   }, []);
 
   if (checking) return null;
-
-  if (!token) {
-    return <LoginPage />;
-  }
+  if (!token) return <LoginPage onLogin={() => window.location.reload()} />;
 
   const handleLogout = () => {
     localStorage.removeItem('auth_token');
-    setToken(null);
-    setLocalToken(null);
+    localStorage.removeItem('auth_user');
+    window.location.href = '/';
   };
 
+  const path = window.location.pathname;
   return (
-    <Layout onLogout={handleLogout}>
-      {path === '/' && <Dashboard />}
-      {path === '/usage' && <Usage />}
-      {path === '/sessions' && <Sessions />}
-      {path.startsWith('/sessions/') && <SessionDetail id={path.split('/')[2]} />}
-      {path === '/settings' && <Settings />}
-      {path === '/compare' && <Compare />}
-    </Layout>
+    <AdminLayout onLogout={handleLogout}>
+      {(path === '/' || path === '/admin') && <AdminDashboard />}
+      {path === '/admin/providers' && <AdminProviders />}
+      {path === '/admin/ads' && <AdminAds />}
+      {path === '/admin/settings' && <AdminSettings />}
+    </AdminLayout>
   );
-}
-
-export function App() {
-  return <PageRouter />;
 }

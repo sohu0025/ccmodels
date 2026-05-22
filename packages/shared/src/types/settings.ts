@@ -8,6 +8,8 @@ export interface AppSettings {
   lightweightMode: boolean;
   proxyPort: number;
   autoConfigCli: boolean;
+  /** Server API URL (sync, system providers, ads, etc.) */
+  serverUrl: string;
   syncEnabled: boolean;
   syncInterval: number;
   syncServerUrl: string;

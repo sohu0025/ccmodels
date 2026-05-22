@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import type { Recommendation } from '@ccswitch/shared';
+import type { Recommendation } from '@ccmodels/shared';
 
 const api = (window as any).electronAPI;
 

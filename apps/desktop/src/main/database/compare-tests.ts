@@ -1,7 +1,7 @@
 import { getDb } from './index';
 import { randomUUID } from 'node:crypto';
 import { enqueueSync } from './sync-queue';
-import type { CompareTest, CompareResponse } from '@ccswitch/shared';
+import type { CompareTest, CompareResponse } from '@ccmodels/shared';
 
 interface CompareTestRow {
   id: string;
@@ -29,7 +29,7 @@ export function createCompareTest(prompt: string, models: string[]): CompareTest
   `).run(id, prompt, JSON.stringify(models), now);
 
   const test = getCompareTestById(id)!;
-  enqueueSync('compare_tests', id, 'create', {
+  enqueueSync('compare_tests', id, 'INSERT', {
     id,
     prompt: test.prompt,
     models: JSON.stringify(test.models),
@@ -49,14 +49,14 @@ export function updateCompareResponse(testId: string, response: CompareResponse)
   const allResponded = test.models.every((m) =>
     test.responses.some((r) => r.modelId === m)
   );
-  const status = allResponded ? 'completed' : 'running';
+  const status = allResponded ? 'completed' : 'pending';
 
   getDb().prepare(`
     UPDATE compare_tests SET responses = ?, status = ? WHERE id = ?
   `).run(JSON.stringify(test.responses), status, testId);
 
   // Sync the updated compare test
-  enqueueSync('compare_tests', testId, 'update', {
+  enqueueSync('compare_tests', testId, 'UPDATE', {
     id: testId,
     prompt: test.prompt,
     models: JSON.stringify(test.models),

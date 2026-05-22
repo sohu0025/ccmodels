@@ -1,11 +1,17 @@
 {
-  "name": "@ccswitch/shared",
+  "name": "@ccmodels/shared",
   "version": "0.1.0",
   "private": true,
-  "main": "./src/index.ts",
+  "main": "./dist/index.js",
   "types": "./src/index.ts",
+  "exports": {
+    ".": {
+      "import": "./src/index.ts",
+      "require": "./dist/index.js"
+    }
+  },
   "scripts": {
-    "build": "tsc",
+    "build": "tsc --module commonjs --moduleResolution node --target ES2022 --outDir ./dist --declaration --declarationMap --sourceMap",
     "clean": "rm -rf dist"
   },
   "devDependencies": {

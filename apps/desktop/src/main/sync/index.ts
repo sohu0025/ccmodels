@@ -1,22 +1,22 @@
+import { BrowserWindow } from 'electron';
 import { getSettings } from '../database/settings';
-import { dequeuePending, markSynced, markFailed } from '../database/sync-queue';
-import type { SyncQueueItem } from '@ccswitch/shared';
+import * as adDb from '../database/ads';
 
 let syncTimer: ReturnType<typeof setInterval> | null = null;
 let isSyncing = false;
 
 export function startSyncDaemon(): void {
   const settings = getSettings();
-  if (!settings.syncEnabled || !settings.syncServerUrl) {
-    console.log('[CC Switch] Sync daemon disabled (sync not configured)');
+  const serverUrl = settings.serverUrl;
+  if (!serverUrl) {
+    console.log('[CC Models] Pull sync disabled (no server URL)');
     return;
   }
 
-  const intervalMs = (settings.syncInterval || 60) * 1000;
-  syncTimer = setInterval(doSync, intervalMs);
-  // Also do an immediate sync
-  doSync();
-  console.log(`[CC Switch] Sync daemon started (interval: ${intervalMs}ms)`);
+  const intervalMs = (settings.syncInterval || 30) * 1000;
+  syncTimer = setInterval(doPullSync, intervalMs);
+  doPullSync();
+  console.log(`[CC Models] Pull sync started (interval: ${intervalMs}ms, server: ${serverUrl})`);
 }
 
 export function stopSyncDaemon(): void {
@@ -27,59 +27,67 @@ export function stopSyncDaemon(): void {
 }
 
 export async function triggerSync(): Promise<{ success: boolean; processed: number; message: string }> {
-  return doSync();
+  return doPullSync();
 }
 
 export function getSyncState(): { isSyncing: boolean } {
   return { isSyncing };
 }
 
-async function doSync(): Promise<{ success: boolean; processed: number; message: string }> {
+async function doPullSync(): Promise<{ success: boolean; processed: number; message: string }> {
   if (isSyncing) return { success: false, processed: 0, message: 'Already syncing' };
   isSyncing = true;
 
-  let items: SyncQueueItem[] = [];
-
   try {
     const settings = getSettings();
-    if (!settings.syncEnabled || !settings.syncServerUrl) {
-      return { success: false, processed: 0, message: 'Sync not configured' };
+    const serverUrl = settings.serverUrl;
+    let processed = 0;
+
+    // Pull ads from server → update local cache → notify renderer
+    try {
+      const adRes = await fetch(`${serverUrl}/api/ad/list`, { signal: AbortSignal.timeout(5000) });
+      if (adRes.ok) {
+        const data = await adRes.json() as any[];
+        adDb.replaceAllAds(data.map(normalizeAd));
+        BrowserWindow.getAllWindows().forEach(w => w.webContents.send('ads:changed'));
+        processed++;
+      }
+    } catch (e: any) {
+      console.warn('[Sync] Failed to pull ads:', e.message);
     }
 
-    items = dequeuePending(50);
-    if (items.length === 0) return { success: true, processed: 0, message: 'Nothing to sync' };
-
-    const res = await fetch(`${settings.syncServerUrl}/api/sync/push`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${settings.syncAuthToken || ''}`,
-      },
-      body: JSON.stringify(items.map((item: SyncQueueItem) => ({
-        tableName: item.tableName,
-        recordId: item.recordId,
-        action: item.action,
-        payload: item.payload,
-      }))),
-    });
-
-    if (!res.ok) {
-      throw new Error(`Sync push failed: ${res.status} ${res.statusText}`);
+    // Pull system providers → notify renderer
+    try {
+      const spRes = await fetch(`${serverUrl}/api/system-providers`, { signal: AbortSignal.timeout(5000) });
+      if (spRes.ok) {
+        BrowserWindow.getAllWindows().forEach(w => w.webContents.send('systemProviders:changed'));
+        processed++;
+      }
+    } catch (e: any) {
+      console.warn('[Sync] Failed to pull system providers:', e.message);
     }
 
-    await res.json();
-    for (const item of items) {
-      markSynced(item.id);
-    }
-
-    return { success: true, processed: items.length, message: 'OK' };
+    return { success: true, processed, message: 'OK' };
   } catch (err: any) {
-    console.error('[CC Switch] Sync failed:', err.message);
-    for (const item of items) {
-      markFailed(item.id);
-    }
+    console.error('[CC Models] Pull sync failed:', err.message);
     return { success: false, processed: 0, message: err.message };
   } finally {
     isSyncing = false;
   }
+}
+
+function normalizeAd(item: any): any {
+  return {
+    id: item.id,
+    type: item.type,
+    title: item.title ?? '',
+    htmlContent: item.htmlContent ?? '',
+    textContent: item.textContent ?? '',
+    linkUrl: item.linkUrl ?? '',
+    width: item.width ?? 0,
+    height: item.height ?? 0,
+    enabled: item.enabled === 1 || item.enabled === true,
+    createdAt: item.createdAt,
+    updatedAt: item.updatedAt,
+  };
 }

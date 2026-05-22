@@ -1,6 +1,6 @@
 import { getDb } from './index';
 import { randomUUID } from 'node:crypto';
-import type { SyncQueueItem, SyncAction, SyncStatus } from '@ccswitch/shared';
+import type { SyncQueueItem, SyncAction, SyncStatus } from '@ccmodels/shared';
 
 interface SyncQueueRow {
   id: string;

@@ -29,7 +29,7 @@ export function initAutoUpdater(mainWindow: BrowserWindow): void {
   });
 
   autoUpdater.on('error', (err) => {
-    console.error('[CC Switch] Auto-update error:', err.message);
+    console.error('[CC Models] Auto-update error:', err.message);
   });
 
   // Check for updates (in production only)

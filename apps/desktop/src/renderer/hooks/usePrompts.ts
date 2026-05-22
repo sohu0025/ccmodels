@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import type { PromptConfig, PromptFormData } from '@ccswitch/shared';
+import type { PromptConfig, PromptFormData } from '@ccmodels/shared';
 
 const api = (window as any).electronAPI;
 

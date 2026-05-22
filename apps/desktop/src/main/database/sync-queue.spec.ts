@@ -21,7 +21,8 @@ vi.mock('./index', () => ({
   getDb: () => testDb,
 }));
 
-const { enqueueSync, dequeuePending, markSynced, markFailed, getSyncStatus, cleanOldSynced } = await import('./sync-queue');
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const { enqueueSync, dequeuePending, markSynced, markFailed, getSyncStatus, cleanOldSynced } = require('./sync-queue');
 
 describe('Sync Queue', () => {
   beforeEach(() => {

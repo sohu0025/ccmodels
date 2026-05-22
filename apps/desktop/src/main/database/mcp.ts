@@ -1,7 +1,7 @@
 import { getDb } from './index';
 import { randomUUID } from 'node:crypto';
 import { enqueueSync } from './sync-queue';
-import type { MCPServer, MCPServerFormData } from '@ccswitch/shared';
+import type { MCPServer, MCPServerFormData } from '@ccmodels/shared';
 
 interface MCPServerRow {
   id: string;
@@ -36,7 +36,7 @@ export function createMcpServer(data: MCPServerFormData): MCPServer {
   `).run(id, data.name, data.transport, data.command ?? null, JSON.stringify(data.args ?? []), data.url ?? null, JSON.stringify(data.headers ?? {}), JSON.stringify(data.envVars ?? {}), now, now);
 
   const server = getMcpServerById(id)!;
-  enqueueSync('mcp_servers', id, 'create', {
+  enqueueSync('mcp_servers', id, 'INSERT', {
     id,
     name: server.name,
     transport: server.transport,
@@ -68,7 +68,7 @@ export function updateMcpServer(id: string, data: Partial<MCPServerFormData>): M
   `).run(name, transport, command, args, url, headers, envVars, now, id);
 
   const updated = getMcpServerById(id)!;
-  enqueueSync('mcp_servers', id, 'update', {
+  enqueueSync('mcp_servers', id, 'UPDATE', {
     id,
     name: updated.name,
     transport: updated.transport,
@@ -84,7 +84,7 @@ export function updateMcpServer(id: string, data: Partial<MCPServerFormData>): M
 
 export function deleteMcpServer(id: string): void {
   getDb().prepare('DELETE FROM mcp_servers WHERE id = ?').run(id);
-  enqueueSync('mcp_servers', id, 'delete', { id });
+  enqueueSync('mcp_servers', id, 'DELETE', { id });
 }
 
 export function setMcpEnabled(id: string, enabled: boolean): void {
@@ -93,7 +93,7 @@ export function setMcpEnabled(id: string, enabled: boolean): void {
 
   const server = getMcpServerById(id);
   if (server) {
-    enqueueSync('mcp_servers', id, 'update', {
+    enqueueSync('mcp_servers', id, 'UPDATE', {
       id,
       name: server.name,
       transport: server.transport,

@@ -1,6 +1,6 @@
-appId: io.ccswitch.app
-productName: CC Switch
-copyright: Copyright © 2026 CC Switch
+appId: io.ccmodels.app
+productName: CC Models
+copyright: Copyright © 2026 CC Models
 
 directories:
   output: release
@@ -8,14 +8,23 @@ directories:
 
 files:
   - dist/**/*
-  - resources/**/*
+
+extraResources:
+  - from: installer-config.json
+    to: installer-config.json
+    filter:
+      - "**/*"
+  - from: resources/icon.png
+    to: icon.png
+  - from: resources/tray-icon.png
+    to: tray-icon.png
 
 win:
+  signAndEditExecutable: false
   target:
     - target: msi
       arch:
         - x64
-  icon: resources/icon.ico
 
 mac:
   target:
@@ -42,7 +51,7 @@ linux:
 
 publish:
   provider: generic
-  url: https://releases.ccswitch.io
+  url: https://releases.cc-models.app
   channel: latest
 
 nsis:

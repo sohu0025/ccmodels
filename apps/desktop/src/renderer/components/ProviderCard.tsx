@@ -1,4 +1,5 @@
-import type { Provider } from '@ccswitch/shared';
+import type { Provider } from '@ccmodels/shared';
+import { useI18n } from '../hooks/useI18n';
 
 interface Props {
   provider: Provider;
@@ -9,6 +10,7 @@ interface Props {
 }
 
 export function ProviderCard({ provider, isActive, onSetActive, onEdit, onDelete }: Props) {
+  const { t } = useI18n();
   return (
     <div
       className={`rounded-2xl p-5 border-2 transition-all cursor-pointer ${
@@ -21,10 +23,17 @@ export function ProviderCard({ provider, isActive, onSetActive, onEdit, onDelete
         <h3 className="font-semibold text-sm">{provider.name}</h3>
         <div className="flex gap-1.5">
           {isActive && (
-            <span className="badge badge-success">当前</span>
+            <span className="badge badge-success">{t('provider.current')}</span>
           )}
           <span className="badge badge-ghost">
-            {provider.type === 'official' ? '官方' : provider.type === 'third-party' ? '中转' : '自定义'}
+            {t(`provider.providerType.${provider.type}`)}
+          </span>
+          <span className={`badge text-[11px] ${
+            provider.apiType === 'anthropic' ? 'badge-warning' :
+            provider.apiType === 'google' ? 'badge-info' :
+            'badge-ghost'
+          }`}>
+            {t(`provider.apiType.${provider.apiType}`)}
           </span>
         </div>
       </div>
@@ -41,22 +50,22 @@ export function ProviderCard({ provider, isActive, onSetActive, onEdit, onDelete
         {!isActive && (
           <button
             onClick={(e) => { e.stopPropagation(); onSetActive(); }}
-            className="btn-primary text-xs px-3 py-1"
+            className="btn btn-primary btn-xs"
           >
-            切换
+            {t('provider.setActive')}
           </button>
         )}
         <button
           onClick={(e) => { e.stopPropagation(); onEdit(); }}
-          className="btn-ghost text-xs px-3 py-1"
+          className="btn btn-ghost btn-xs"
         >
-          编辑
+          {t('common.edit')}
         </button>
         <button
           onClick={(e) => { e.stopPropagation(); onDelete(); }}
-          className="btn-ghost text-xs px-3 py-1 text-danger"
+          className="btn btn-ghost btn-xs text-error"
         >
-          删除
+          {t('common.delete')}
         </button>
       </div>
     </div>

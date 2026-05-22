@@ -4,8 +4,10 @@ export const PRESET_PROVIDERS: ProviderFormData[] = [
   {
     name: 'DeepSeek',
     type: 'official',
+    apiType: 'openai',
     apiBase: 'https://api.deepseek.com',
     apiKey: '',
+    website: 'https://www.deepseek.com',
     cliUrls: {
       'claude-code': 'https://api.deepseek.com',
       codex: 'https://api.deepseek.com',
@@ -18,8 +20,10 @@ export const PRESET_PROVIDERS: ProviderFormData[] = [
   {
     name: '智谱 GLM',
     type: 'official',
+    apiType: 'openai',
     apiBase: 'https://open.bigmodel.cn/api/paas/v4',
     apiKey: '',
+    website: 'https://open.bigmodel.cn',
     cliUrls: {
       'claude-code': 'https://open.bigmodel.cn/api/paas/v4',
       codex: 'https://open.bigmodel.cn/api/paas/v4',
@@ -30,8 +34,10 @@ export const PRESET_PROVIDERS: ProviderFormData[] = [
   {
     name: 'Kimi (Moonshot)',
     type: 'official',
+    apiType: 'openai',
     apiBase: 'https://api.moonshot.cn/v1',
     apiKey: '',
+    website: 'https://kimi.moonshot.cn',
     cliUrls: {
       'claude-code': 'https://api.moonshot.cn/v1',
       codex: 'https://api.moonshot.cn/v1',
@@ -42,8 +48,10 @@ export const PRESET_PROVIDERS: ProviderFormData[] = [
   {
     name: 'MiniMax',
     type: 'official',
+    apiType: 'openai',
     apiBase: 'https://api.minimax.chat/v1',
     apiKey: '',
+    website: 'https://www.minimax.io',
     cliUrls: {},
     headers: {},
     models: ['abab6.5s-chat', 'abab7-chat'],
@@ -51,8 +59,10 @@ export const PRESET_PROVIDERS: ProviderFormData[] = [
   {
     name: '通义千问 (DashScope)',
     type: 'official',
+    apiType: 'openai',
     apiBase: 'https://dashscope.aliyuncs.com/compatible-mode/v1',
     apiKey: '',
+    website: 'https://tongyi.aliyun.com',
     cliUrls: {
       'claude-code': 'https://dashscope.aliyuncs.com/compatible-mode/v1',
     },
@@ -62,8 +72,10 @@ export const PRESET_PROVIDERS: ProviderFormData[] = [
   {
     name: '字节豆包',
     type: 'official',
+    apiType: 'openai',
     apiBase: 'https://ark.cn-beijing.volces.com/api/v3',
     apiKey: '',
+    website: 'https://www.volcengine.com/product/doubao',
     cliUrls: {},
     headers: {},
     models: ['doubao-pro-32k', 'doubao-pro-128k', 'doubao-lite-32k'],
@@ -71,8 +83,10 @@ export const PRESET_PROVIDERS: ProviderFormData[] = [
   {
     name: '百川 (Baichuan)',
     type: 'official',
+    apiType: 'openai',
     apiBase: 'https://api.baichuan-ai.com/v1',
     apiKey: '',
+    website: 'https://www.baichuan-ai.com',
     cliUrls: {},
     headers: {},
     models: ['Baichuan4', 'Baichuan3-Turbo'],
@@ -80,8 +94,10 @@ export const PRESET_PROVIDERS: ProviderFormData[] = [
   {
     name: '讯飞星火',
     type: 'official',
+    apiType: 'openai',
     apiBase: 'https://spark-api-open.xf-yun.com/v1',
     apiKey: '',
+    website: 'https://xinghuo.xfyun.cn',
     cliUrls: {},
     headers: {},
     models: ['spark-4.0-ultra', 'spark-max', 'spark-pro'],
@@ -89,8 +105,10 @@ export const PRESET_PROVIDERS: ProviderFormData[] = [
   {
     name: '腾讯混元',
     type: 'official',
+    apiType: 'openai',
     apiBase: 'https://api.hunyuan.cloud.tencent.com/v1',
     apiKey: '',
+    website: 'https://hunyuan.tencent.com',
     cliUrls: {},
     headers: {},
     models: ['hunyuan-turbo', 'hunyuan-pro', 'hunyuan-lite'],
@@ -98,8 +116,10 @@ export const PRESET_PROVIDERS: ProviderFormData[] = [
   {
     name: 'SiliconFlow',
     type: 'official',
+    apiType: 'openai',
     apiBase: 'https://api.siliconflow.cn/v1',
     apiKey: '',
+    website: 'https://siliconflow.cn',
     cliUrls: {
       'claude-code': 'https://api.siliconflow.cn/v1',
       codex: 'https://api.siliconflow.cn/v1',
@@ -110,8 +130,10 @@ export const PRESET_PROVIDERS: ProviderFormData[] = [
   {
     name: 'OpenRouter',
     type: 'third-party',
+    apiType: 'openai',
     apiBase: 'https://openrouter.ai/api/v1',
     apiKey: '',
+    website: 'https://openrouter.ai',
     cliUrls: {},
     headers: {},
     models: [],
@@ -119,8 +141,10 @@ export const PRESET_PROVIDERS: ProviderFormData[] = [
   {
     name: 'Anthropic Official',
     type: 'official',
+    apiType: 'anthropic',
     apiBase: 'https://api.anthropic.com',
     apiKey: '',
+    website: 'https://www.anthropic.com',
     cliUrls: {
       'claude-code': 'https://api.anthropic.com',
     },
@@ -130,8 +154,10 @@ export const PRESET_PROVIDERS: ProviderFormData[] = [
   {
     name: 'OpenAI Official',
     type: 'official',
+    apiType: 'openai',
     apiBase: 'https://api.openai.com/v1',
     apiKey: '',
+    website: 'https://platform.openai.com',
     cliUrls: {
       codex: 'https://api.openai.com/v1',
     },
@@ -141,10 +167,12 @@ export const PRESET_PROVIDERS: ProviderFormData[] = [
   {
     name: 'Google Gemini',
     type: 'official',
-    apiBase: 'https://generativelanguage.googleapis.com/v1beta',
+    apiType: 'google',
+    apiBase: 'https://generativelanguage.googleapis.com',
     apiKey: '',
+    website: 'https://ai.google.dev',
     cliUrls: {
-      'gemini-cli': 'https://generativelanguage.googleapis.com/v1beta',
+      'gemini-cli': 'https://generativelanguage.googleapis.com',
     },
     headers: {},
     models: ['gemini-2.5-pro', 'gemini-2.5-flash', 'gemini-2.0-flash'],

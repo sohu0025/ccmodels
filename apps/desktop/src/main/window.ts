@@ -1,17 +1,26 @@
-import { BrowserWindow, app, screen } from 'electron';
+import { BrowserWindow, app, screen, nativeImage } from 'electron';
 import path from 'node:path';
+import { DEFAULT_DEV_SERVER_PORT } from '@ccmodels/shared';
 
 const isDev = !app.isPackaged;
 
 export function createMainWindow(): BrowserWindow {
   const { width: screenWidth } = screen.getPrimaryDisplay().workAreaSize;
 
+  // Set window icon from resources
+  const iconPath = app.isPackaged
+    ? path.join(process.resourcesPath, 'icon.png')
+    : path.join(__dirname, '../../resources/icon.png');
+  const icon = nativeImage.createFromPath(iconPath);
+
   const win = new BrowserWindow({
-    width: Math.min(1200, screenWidth),
-    height: 800,
-    minWidth: 900,
-    minHeight: 600,
-    title: 'CC Switch',
+    width: 850,
+    height: 535,
+    resizable: false,
+    frame: false,
+    titleBarStyle: 'hidden',
+    title: 'CC Models',
+    icon,
     webPreferences: {
       preload: path.join(__dirname, '../preload/index.js'),
       contextIsolation: true,
@@ -21,11 +30,14 @@ export function createMainWindow(): BrowserWindow {
   });
 
   win.once('ready-to-show', () => {
+    console.log('[CC Models] Window ready-to-show, showing now');
     win.show();
   });
 
+  win.on('maximize', () => win.unmaximize());
+
   if (isDev) {
-    win.loadURL('http://localhost:5173');
+    win.loadURL(`http://localhost:${DEFAULT_DEV_SERVER_PORT}`);
   } else {
     win.loadFile(path.join(__dirname, '../renderer/index.html'));
   }

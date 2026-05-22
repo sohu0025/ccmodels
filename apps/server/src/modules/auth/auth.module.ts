@@ -1,10 +1,11 @@
-import { Module } from '@nestjs/common';
+import { Module, Global } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
 
+@Global()
 @Module({
-  imports: [JwtModule.register({ secret: process.env.JWT_SECRET || 'cc-switch-secret', signOptions: { expiresIn: '7d' } })],
+  imports: [JwtModule.register({ secret: process.env.JWT_SECRET || 'cc-models-secret', signOptions: { expiresIn: '7d' } })],
   providers: [AuthService],
   controllers: [AuthController],
   exports: [AuthService],

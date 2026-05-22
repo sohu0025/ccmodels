@@ -9,13 +9,13 @@ const prisma = new PrismaClient();
 export class AuthService {
   constructor(private jwtService: JwtService) {}
 
-  async validateToken(token: string): Promise<{ userId: string } | null> {
-    try { return this.jwtService.verify(token) as { userId: string }; }
+  async validateToken(token: string): Promise<{ userId: string; role: string } | null> {
+    try { return this.jwtService.verify(token) as { userId: string; role: string }; }
     catch { return null; }
   }
 
-  signToken(userId: string): string {
-    return this.jwtService.sign({ userId });
+  signToken(userId: string, role: string = 'user'): string {
+    return this.jwtService.sign({ userId, role });
   }
 
   async register(email: string, password: string, name: string) {
@@ -29,7 +29,7 @@ export class AuthService {
       data: { email, password: hashedPassword, name },
     });
 
-    return { id: user.id, email: user.email, name: user.name };
+    return { id: user.id, email: user.email, name: user.name, role: user.role };
   }
 
   async login(email: string, password: string) {
@@ -39,6 +39,6 @@ export class AuthService {
     const valid = await bcrypt.compare(password, user.password);
     if (!valid) return null;
 
-    return { id: user.id, email: user.email, name: user.name };
+    return { id: user.id, email: user.email, name: user.name, role: user.role };
   }
 }

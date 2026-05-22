@@ -1,0 +1,65 @@
+name: Build Installers
+on:
+  repository_dispatch:
+    types: [build-installer]
+
+env:
+  NODE_VERSION: '22'
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        os:
+          - windows-latest
+          - macos-latest
+          - ubuntu-latest
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build shared package
+        run: pnpm --filter @ccmodels/shared build
+
+      - name: Write installer config
+        run: |
+          echo '${{ github.event.client_payload }}' > apps/desktop/installer-config.json
+
+      - name: Build desktop app
+        run: |
+          cd apps/desktop
+          npx tsc -p tsconfig.main.json
+          npx vite build
+
+      - name: Package installer
+        run: |
+          cd apps/desktop
+          npx electron-builder --config electron-builder.yml
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload installer (${{ matrix.os }})
+        uses: actions/upload-artifact@v4
+        with:
+          name: cc-models-installer-${{ matrix.os }}
+          path: |
+            apps/desktop/release/*.msi
+            apps/desktop/release/*.dmg
+            apps/desktop/release/*.AppImage
+            apps/desktop/release/*.deb
+            apps/desktop/release/*.rpm
+            apps/desktop/release/*.exe
+            apps/desktop/release/*.zip
+            apps/desktop/release/*.yml
+            apps/desktop/release/*.blockmap
+          if-no-files-found: ignore

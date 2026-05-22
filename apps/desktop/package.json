@@ -1,5 +1,6 @@
 {
-  "name": "@ccswitch/desktop",
+  "name": "@ccmodels/desktop",
+  "productName": "CC Models",
   "version": "0.1.0",
   "private": true,
   "main": "dist/main/index.js",
@@ -17,9 +18,11 @@
     "test:watch": "vitest"
   },
   "dependencies": {
-    "@ccswitch/shared": "workspace:*",
+    "@ccmodels/shared": "workspace:*",
+    "@lobehub/icons": "^5.8.0",
+    "@sentry/electron": "^7.13.0",
     "better-sqlite3": "^12.10.0",
-    "chokidar": "^5.0.0",
+    "chokidar": "3",
     "electron-updater": "^6.3.0",
     "recharts": "^3.8.1"
   },
@@ -30,8 +33,10 @@
     "@types/react-dom": "^18.3.0",
     "@vitejs/plugin-react": "^4.3.0",
     "concurrently": "^9.0.0",
+    "daisyui": "^5.5.20",
     "electron": "^33.0.0",
     "electron-builder": "^25.0.0",
+    "pngjs": "^7.0.0",
     "react": "^18.3.0",
     "react-dom": "^18.3.0",
     "react-router-dom": "^6.28.0",

@@ -1,11 +1,15 @@
 import { useState } from 'react';
 import { useMcp } from '../hooks/useMcp';
-import type { MCPTransport } from '@ccswitch/shared';
+import { useI18n } from '../hooks/useI18n';
+import { ConfirmDialog } from '../components/ConfirmDialog';
+import type { MCPTransport } from '@ccmodels/shared';
 
 export function Mcp() {
   const { servers, statuses, loading, create, update, remove, toggleEnabled, startStop } = useMcp();
+  const { t } = useI18n();
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState<{ name: string; transport: MCPTransport; command?: string; args?: string[]; url?: string; id?: string }>({ name: '', transport: 'stdio', command: '', args: [], url: '' });
+  const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
 
   const handleSave = async () => {
     const saveData: any = { ...form };
@@ -29,34 +33,34 @@ export function Mcp() {
     setEditing(false);
   };
 
-  if (loading) return <div className="text-text-secondary">Loading...</div>;
+  if (loading) return <div className="text-text-secondary">{t('common.loading')}</div>;
 
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight">MCP 管理</h2>
-          <p className="text-sm text-text-secondary mt-1">管理 MCP 服务器（stdio、HTTP、SSE）</p>
+          <h2 className="text-2xl font-bold tracking-tight">{t('mcp.title')}</h2>
+          <p className="text-sm text-text-secondary mt-1">{t('mcp.desc')}</p>
         </div>
         <button
           onClick={() => { setEditing(true); setForm({ name: '', transport: 'stdio', command: '', args: [], url: '' }); }}
-          className="btn-primary"
+          className="btn btn-primary"
         >
-          + 添加 MCP
+          {t('mcp.add')}
         </button>
       </div>
 
       {/* Server list */}
       {servers.length === 0 ? (
-        <div className="card p-12 text-center">
-          <p className="text-lg font-medium mb-1">暂无 MCP 服务器</p>
-          <p className="text-sm text-text-secondary">添加第一个 MCP 服务器以扩展工具能力</p>
+        <div className="card card-bordered p-12 text-center">
+          <p className="text-lg font-medium mb-1">{t('mcp.emptyTitle')}</p>
+          <p className="text-sm text-text-secondary">{t('mcp.emptyDesc')}</p>
         </div>
       ) : (
         <div className="space-y-3">
           {servers.map((s) => (
-            <div key={s.id} className="card p-5 flex items-center justify-between">
+            <div key={s.id} className="card card-bordered p-5 flex items-center justify-between">
               <div>
                 <div className="flex items-center gap-2.5 mb-1.5">
                   <span className={`indicator ${statuses[s.id] === 'running' ? 'indicator-success' : 'indicator-danger'}`} />
@@ -80,16 +84,16 @@ export function Mcp() {
                         : 'bg-success/10 text-success hover:bg-success/20'
                     }`}
                   >
-                    {statuses[s.id] === 'running' ? '停止' : '启动'}
+                    {statuses[s.id] === 'running' ? t('mcp.stop') : t('mcp.start')}
                   </button>
                 )}
                 <button
                   onClick={() => { setEditing(true); setForm({ id: s.id, name: s.name, transport: s.transport, command: s.command, args: s.args, url: s.url }); }}
-                  className="btn-ghost"
+                  className="btn btn-ghost"
                 >
-                  编辑
+                  {t('mcp.edit')}
                 </button>
-                <button onClick={() => remove(s.id)} className="btn-ghost text-danger">删除</button>
+                <button onClick={() => setConfirmDelete(s.id)} className="btn btn-ghost text-error">{t('mcp.delete')}</button>
               </div>
             </div>
           ))}
@@ -98,33 +102,43 @@ export function Mcp() {
 
       {/* Edit dialog */}
       {editing && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setEditing(false)}>
-          <div className="card p-6 w-full max-w-md mx-4" onClick={(e) => e.stopPropagation()}>
-            <h3 className="text-lg font-bold mb-4">{form.id ? '编辑' : '添加'} MCP 服务器</h3>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => setEditing(false)}>
+          <div className="bg-white text-text-primary rounded-2xl shadow-xl p-6 w-full max-w-md mx-4" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-lg font-bold mb-4">{form.id ? t('mcp.editTitle') : t('mcp.addTitle')}</h3>
             <div className="space-y-3">
-              <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="名称" className="input w-full" />
-              <select value={form.transport} onChange={(e) => setForm({ ...form, transport: e.target.value as MCPTransport })} className="input w-full">
+              <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder={t('mcp.namePlaceholder')} className="input input-bordered w-full" />
+              <select value={form.transport} onChange={(e) => setForm({ ...form, transport: e.target.value as MCPTransport })} className="input input-bordered w-full">
                 <option value="stdio">stdio</option>
                 <option value="http">http</option>
                 <option value="sse">sse</option>
               </select>
               {form.transport === 'stdio' && (
                 <>
-                  <input value={form.command ?? ''} onChange={(e) => setForm({ ...form, command: e.target.value })} placeholder="命令 (如 node)" className="input w-full font-mono" />
-                  <input value={(form.args ?? []).join(' ')} onChange={(e) => setForm({ ...form, args: e.target.value.split(' ') })} placeholder="参数（空格分隔）" className="input w-full font-mono" />
+                  <input value={form.command ?? ''} onChange={(e) => setForm({ ...form, command: e.target.value })} placeholder={t('mcp.cmdPlaceholder')} className="input input-bordered w-full font-mono" />
+                  <input value={(form.args ?? []).join(' ')} onChange={(e) => setForm({ ...form, args: e.target.value.split(' ') })} placeholder={t('mcp.argsPlaceholder')} className="input input-bordered w-full font-mono" />
                 </>
               )}
               {(form.transport === 'http' || form.transport === 'sse') && (
-                <input value={form.url ?? ''} onChange={(e) => setForm({ ...form, url: e.target.value })} placeholder="URL" className="input w-full font-mono" />
+                <input value={form.url ?? ''} onChange={(e) => setForm({ ...form, url: e.target.value })} placeholder={t('mcp.urlPlaceholder')} className="input input-bordered w-full font-mono" />
               )}
             </div>
             <div className="flex justify-end gap-2 mt-5">
-              <button onClick={() => setEditing(false)} className="btn-ghost">取消</button>
-              <button onClick={handleSave} className="btn-primary">保存</button>
+              <button onClick={() => setEditing(false)} className="btn btn-ghost">{t('common.cancel')}</button>
+              <button onClick={handleSave} className="btn btn-primary">{t('common.save')}</button>
             </div>
           </div>
         </div>
       )}
+
+      {/* Confirm delete dialog */}
+      <ConfirmDialog
+        open={confirmDelete !== null}
+        title={t('mcp.deleteTitle')}
+        message={t('mcp.deleteConfirm')}
+        confirmLabel={t('common.delete')}
+        onConfirm={() => { if (confirmDelete) { remove(confirmDelete); setConfirmDelete(null); } }}
+        onCancel={() => setConfirmDelete(null)}
+      />
     </div>
   );
 }

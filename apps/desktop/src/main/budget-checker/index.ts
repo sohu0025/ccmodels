@@ -25,7 +25,7 @@ export function stopBudgetChecking(): void {
 function runBudgetCheck(): void {
   const result = checkBudgetThreshold();
   if (result) {
-    showNotification('CC Switch — Budget Alert', result.message);
+    showNotification('CC Models — Budget Alert', result.message);
     markBudgetNotified();
   }
 }

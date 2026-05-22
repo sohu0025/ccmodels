@@ -1,46 +1,46 @@
 import http from 'node:http';
 import https from 'node:https';
-import { getActiveProvider } from '../database/providers';
+import { getActiveProvider, getAllProviders, getToolProvidersRaw } from '../database/providers';
 import { recordSpeedTest } from '../database/speed-tests';
-import { getSettings } from '../database/settings';
-import { showNotification } from '../tray';
-
-let intervalHandle: ReturnType<typeof setInterval> | null = null;
 
 export function startSpeedTesting(): void {
-  stopSpeedTesting();
-
-  const intervalMinutes = getSettings().speedTestInterval;
-  if (intervalMinutes <= 0) return;
-
-  intervalHandle = setInterval(() => {
-    runSpeedTests();
-  }, intervalMinutes * 60 * 1000);
-
-  // Run immediately on start
-  runSpeedTests();
+  // Speed tests are now triggered manually from the UI.
 }
 
 export function stopSpeedTesting(): void {
-  if (intervalHandle) {
-    clearInterval(intervalHandle);
-    intervalHandle = null;
-  }
 }
 
 export async function runSpeedTests(): Promise<void> {
-  const provider = getActiveProvider();
-  if (!provider) return;
+  // Collect all providers that are either global active or assigned to a tool
+  const providerIds = new Set<string>();
 
-  for (const _model of provider.models.slice(0, 1)) {
+  const globalActive = getActiveProvider();
+  if (globalActive) providerIds.add(globalActive.id);
+
+  // Also test providers assigned to any tool
+  const toolProviders = getToolProvidersRaw();
+  for (const value of Object.values(toolProviders)) {
+    const ids = Array.isArray(value) ? value : (value ? [value] : []);
+    for (const id of ids) {
+      providerIds.add(id);
+    }
+  }
+
+  if (providerIds.size === 0) return;
+
+  const allProviders = getAllProviders();
+  const providersToTest = allProviders.filter(p => providerIds.has(p.id));
+
+  for (const provider of providersToTest) {
+    const model = provider.models[0] ?? '';
     const startTime = Date.now();
     try {
       await pingProvider(provider.apiBase, provider.apiKey);
       const latencyMs = Date.now() - startTime;
-      recordSpeedTest(provider.id, latencyMs, true);
+      recordSpeedTest(provider.id, latencyMs, true, model);
     } catch (err: any) {
       const latencyMs = Date.now() - startTime;
-      recordSpeedTest(provider.id, latencyMs, false, err.message);
+      recordSpeedTest(provider.id, latencyMs, false, model, err.message);
     }
   }
 }

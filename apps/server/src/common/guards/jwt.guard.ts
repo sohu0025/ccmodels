@@ -1,5 +1,5 @@
 import { Injectable, CanActivate, ExecutionContext, HttpException, HttpStatus } from '@nestjs/common';
-import { AuthService } from '../auth/auth.service';
+import { AuthService } from '../../modules/auth/auth.service';
 
 /**
  * Guard that validates the Bearer JWT token on incoming requests.

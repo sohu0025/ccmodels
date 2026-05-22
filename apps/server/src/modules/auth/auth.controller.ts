@@ -15,11 +15,13 @@ export class AuthController {
     }
 
     const user = await this.authService.register(body.email, body.password, body.name ?? '');
-    const token = this.authService.signToken(user.id);
+    if (!user) throw new HttpException('Email already exists', HttpStatus.CONFLICT);
+
+    const token = this.authService.signToken(user.id, user.role);
 
     return {
       token,
-      user: { id: user.id, email: user.email, name: user.name },
+      user: { id: user.id, email: user.email, name: user.name, role: user.role },
     };
   }
 
@@ -34,11 +36,11 @@ export class AuthController {
       throw new HttpException('Invalid email or password', HttpStatus.UNAUTHORIZED);
     }
 
-    const token = this.authService.signToken(user.id);
+    const token = this.authService.signToken(user.id, user.role);
 
     return {
       token,
-      user: { id: user.id, email: user.email, name: user.name },
+      user: { id: user.id, email: user.email, name: user.name, role: user.role },
     };
   }
 

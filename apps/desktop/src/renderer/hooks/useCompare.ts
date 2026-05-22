@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import type { CompareTest } from '@ccswitch/shared';
+import type { CompareTest } from '@ccmodels/shared';
 
 const api = (window as any).electronAPI;
 
@@ -21,10 +21,10 @@ export function useCompare() {
 
   useEffect(() => { refresh(); }, [refresh]);
 
-  const create = async (prompt: string, models: string[]) => {
+  const create = async (prompt: string, providerIds: string[], modelIds: string[]) => {
     try {
       setError(null);
-      const testId = await api.runCompareTest(prompt, models);
+      const testId = await api.runCompareTest(prompt, providerIds, modelIds);
       refresh();
       return testId;
     } catch (err: any) {

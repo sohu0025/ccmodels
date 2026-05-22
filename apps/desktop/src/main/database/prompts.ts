@@ -1,7 +1,7 @@
 import { getDb } from './index';
 import { randomUUID } from 'node:crypto';
 import { enqueueSync } from './sync-queue';
-import type { PromptConfig, PromptFormData } from '@ccswitch/shared';
+import type { PromptConfig, PromptFormData } from '@ccmodels/shared';
 
 interface PromptRow {
   id: string;
@@ -33,7 +33,7 @@ export function createPrompt(data: PromptFormData): PromptConfig {
   `).run(id, data.name, data.content, data.target, JSON.stringify(data.tags), now, now);
 
   const prompt = getPromptById(id)!;
-  enqueueSync('prompts', id, 'create', {
+  enqueueSync('prompts', id, 'INSERT', {
     id,
     name: prompt.name,
     content: prompt.content,
@@ -60,7 +60,7 @@ export function updatePrompt(id: string, data: Partial<PromptFormData>): PromptC
 
 export function deletePrompt(id: string): void {
   getDb().prepare('DELETE FROM prompts WHERE id = ?').run(id);
-  enqueueSync('prompts', id, 'delete', { id });
+  enqueueSync('prompts', id, 'DELETE', { id });
 }
 
 export function setPromptActive(id: string, active: boolean): void {
@@ -69,7 +69,7 @@ export function setPromptActive(id: string, active: boolean): void {
 
   const prompt = getPromptById(id);
   if (prompt) {
-    enqueueSync('prompts', id, 'update', {
+    enqueueSync('prompts', id, 'UPDATE', {
       id,
       name: prompt.name,
       isActive: prompt.isActive,

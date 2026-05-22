@@ -1,10 +1,12 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSessions } from '../hooks/useSessions';
-import type { Session } from '@ccswitch/shared';
+import type { Session } from '@ccmodels/shared';
+import { useI18n } from '../hooks/useI18n';
 
 export function Sessions() {
   const navigate = useNavigate();
+  const { t } = useI18n();
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
   const { sessions, total, loading, refresh } = useSessions({ page, pageSize: 20 });
@@ -21,30 +23,30 @@ export function Sessions() {
 
   const totalPages = Math.max(1, Math.ceil(total / 20));
 
-  if (loading) return <div className="text-text-secondary">Loading...</div>;
+  if (loading) return <div className="text-text-secondary">{t('common.loading')}</div>;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Search bar */}
       <div className="flex items-center gap-3">
         <input
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-          placeholder="Search sessions..."
-          className="input flex-1"
+          placeholder={t('sessions.search')}
+          className="input input-bordered flex-1"
         />
-        <button onClick={handleSearch} className="btn-primary">搜索</button>
+        <button onClick={handleSearch} className="btn btn-primary">{t('sessions.search')}</button>
       </div>
 
       {/* Session list */}
       {sessions.length === 0 ? (
-        <div className="card p-12 text-center">
-          <p className="text-lg font-medium mb-1">暂无会话</p>
-          <p className="text-sm text-text-secondary">API 请求经过代理时会自动记录会话</p>
+        <div className="card card-bordered p-12 text-center">
+          <p className="text-lg font-medium mb-1">{t('sessions.emptyTitle')}</p>
+          <p className="text-sm text-text-secondary">{t('sessions.emptyDesc')}</p>
         </div>
       ) : (
-        <div className="card overflow-hidden">
+        <div className="card card-bordered overflow-hidden">
           <div className="divide-y divide-border">
             {sessions.map((s: Session) => (
               <div
@@ -60,12 +62,13 @@ export function Sessions() {
                     </span>
                   </div>
                   <p className="text-xs text-text-tertiary">
-                    {s.providerName} · {new Date(s.startedAt).toLocaleString()} · {s.messageCount} 条消息
+                    {new Date(s.startedAt).toLocaleString()} · {t('sessions.messages', { count: s.messageCount })}
                   </p>
                 </div>
                 <div className="text-right ml-4">
-                  <p className="text-sm font-mono">${s.totalCost.toFixed(4)}</p>
-                  <p className="text-xs text-text-tertiary">{(s.totalTokens / 1000).toFixed(1)}K tokens</p>
+                  <p className="text-xs text-text-tertiary">
+                    {s.totalTokens > 0 ? `${(s.totalTokens / 1000).toFixed(1)}K tokens` : t('sessions.noTokens')}
+                  </p>
                 </div>
               </div>
             ))}
@@ -79,9 +82,9 @@ export function Sessions() {
           <button
             disabled={page <= 1}
             onClick={() => handlePageChange(page - 1)}
-            className="btn-ghost disabled:opacity-40"
+            className="btn btn-ghost disabled:opacity-40"
           >
-            上一页
+            {t('sessions.prevPage')}
           </button>
           <span className="px-3 py-2 text-sm text-text-secondary">
             {page} / {totalPages}
@@ -89,9 +92,9 @@ export function Sessions() {
           <button
             disabled={page >= totalPages}
             onClick={() => handlePageChange(page + 1)}
-            className="btn-ghost disabled:opacity-40"
+            className="btn btn-ghost disabled:opacity-40"
           >
-            下一页
+            {t('sessions.nextPage')}
           </button>
         </div>
       )}

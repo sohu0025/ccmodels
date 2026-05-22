@@ -1,7 +1,7 @@
 import Database from 'better-sqlite3';
 import path from 'node:path';
 import { app } from 'electron';
-import { DB_FILENAME } from '@ccswitch/shared';
+import { DB_FILENAME } from '@ccmodels/shared';
 
 let db: Database.Database;
 
@@ -18,8 +18,10 @@ export function initDatabase(): void {
       id TEXT PRIMARY KEY,
       name TEXT NOT NULL,
       type TEXT NOT NULL DEFAULT 'custom',
+      api_type TEXT NOT NULL DEFAULT 'openai',
       api_base TEXT NOT NULL,
       api_key TEXT NOT NULL DEFAULT '',
+      website TEXT NOT NULL DEFAULT '',
       cli_urls TEXT NOT NULL DEFAULT '{}',
       headers TEXT NOT NULL DEFAULT '{}',
       models TEXT NOT NULL DEFAULT '[]',
@@ -174,9 +176,47 @@ export function initDatabase(): void {
       usage_count INTEGER NOT NULL DEFAULT 0,
       updated_at TEXT NOT NULL DEFAULT (datetime('now'))
     );
+
+    CREATE TABLE IF NOT EXISTS ads (
+      id TEXT PRIMARY KEY,
+      type TEXT NOT NULL CHECK(type IN ('popup','corner','text')),
+      title TEXT NOT NULL DEFAULT '',
+      html_content TEXT NOT NULL DEFAULT '',
+      text_content TEXT NOT NULL DEFAULT '',
+      link_url TEXT NOT NULL DEFAULT '',
+      width INTEGER NOT NULL DEFAULT 0,
+      height INTEGER NOT NULL DEFAULT 0,
+      enabled INTEGER NOT NULL DEFAULT 0,
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );
   `);
 
+  migrateSchema();
   insertDefaultSettings();
+}
+
+function migrateSchema(): void {
+  // Add api_type column if missing (pre-1.0 databases)
+  try {
+    db.exec('ALTER TABLE providers ADD COLUMN api_type TEXT NOT NULL DEFAULT \'openai\'');
+  } catch {
+    // Column already exists — ignore
+  }
+  // Add website column if missing
+  try {
+    db.exec('ALTER TABLE providers ADD COLUMN website TEXT NOT NULL DEFAULT \'\'');
+  } catch {
+    // Column already exists — ignore
+  }
+  // Add link_url column to ads if missing
+  try {
+    db.exec('ALTER TABLE ads ADD COLUMN link_url TEXT NOT NULL DEFAULT \'\'');
+  } catch {
+    // Column already exists — ignore
+  }
+  // Clean up any remaining seed ads from early development
+  db.exec("DELETE FROM ads WHERE id LIKE 'seed-%'");
 }
 
 function insertDefaultSettings(): void {
@@ -190,7 +230,7 @@ function insertDefaultSettings(): void {
     mcpAutoStart: 'true',
     syncEnabled: 'false',
     syncInterval: '60',
-    syncServerUrl: '',
+    syncServerUrl: 'http://localhost:3000',
     syncAuthToken: '',
     monthlyBudgetLimit: '50',
     budgetNotifyThreshold: '80',

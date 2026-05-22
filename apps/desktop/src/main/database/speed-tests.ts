@@ -5,22 +5,25 @@ import { enqueueSync } from './sync-queue';
 export interface SpeedTestRecord {
   id: string;
   providerId: string;
+  modelId?: string;
   latencyMs: number;
   success: boolean;
+  errorMessage?: string;
   testedAt: string;
 }
 
-export function recordSpeedTest(providerId: string, latencyMs: number, success: boolean, errorMessage = ''): void {
+export function recordSpeedTest(providerId: string, latencyMs: number, success: boolean, modelId = '', errorMessage = ''): void {
   const id = randomUUID();
   const now = new Date().toISOString();
   getDb().prepare(`
-    INSERT INTO speed_tests (id, provider_id, latency_ms, success, error_message, tested_at)
-    VALUES (?, ?, ?, ?, ?, ?)
-  `).run(id, providerId, latencyMs, success ? 1 : 0, errorMessage, now);
+    INSERT INTO speed_tests (id, provider_id, model_id, latency_ms, success, error_message, tested_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?)
+  `).run(id, providerId, modelId, latencyMs, success ? 1 : 0, errorMessage, now);
 
-  enqueueSync('speed_tests', id, 'create', {
+  enqueueSync('speed_tests', id, 'INSERT', {
     id,
     providerId,
+    modelId,
     latencyMs,
     success,
     testedAt: now,
@@ -29,7 +32,7 @@ export function recordSpeedTest(providerId: string, latencyMs: number, success: 
 
 export function getLatestSpeedTests(limit = 50): SpeedTestRecord[] {
   return getDb().prepare(`
-    SELECT id, provider_id as providerId, latency_ms as latencyMs, success, tested_at as testedAt
+    SELECT id, provider_id as providerId, model_id as modelId, latency_ms as latencyMs, success, error_message as errorMessage, tested_at as testedAt
     FROM speed_tests ORDER BY tested_at DESC LIMIT ?
   `).all(limit) as SpeedTestRecord[];
 }

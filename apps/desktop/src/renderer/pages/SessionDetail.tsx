@@ -1,24 +1,26 @@
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useSessionDetail } from '../hooks/useSessions';
+import { useI18n } from '../hooks/useI18n';
 
 export function SessionDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { t } = useI18n();
   const { session, messages, loading } = useSessionDetail(id);
 
-  if (loading) return <div className="text-text-secondary">Loading...</div>;
-  if (!session) return <div className="text-text-secondary">Session not found</div>;
+  if (loading) return <div className="text-text-secondary">{t('common.loading')}</div>;
+  if (!session) return <div className="text-text-secondary">{t('sessionDetail.notFound')}</div>;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Back button + title */}
       <button onClick={() => navigate('/sessions')} className="text-sm text-accent hover:underline">
-        ← 返回会话列表
+        {t('sessionDetail.back')}
       </button>
 
       <div>
-        <h2 className="text-xl font-bold tracking-tight">{session.summary || session.modelId || '会话详情'}</h2>
+        <h2 className="text-xl font-bold tracking-tight">{session.summary || session.modelId || t('sessionDetail.title')}</h2>
         <div className="flex items-center gap-2 mt-2">
           <span className="badge">{session.cliTool}</span>
           <span className="text-xs text-text-tertiary">{session.providerName}</span>
@@ -26,28 +28,24 @@ export function SessionDetail() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-3 gap-4">
         <div className="stat-card">
-          <p className="stat-label">消息数</p>
+          <p className="stat-label">{t('sessionDetail.statsMessages')}</p>
           <p className="stat-value">{session.messageCount}</p>
         </div>
         <div className="stat-card">
-          <p className="stat-label">Token 总量</p>
-          <p className="stat-value">{(session.totalTokens / 1000).toFixed(1)}K</p>
+          <p className="stat-label">{t('sessionDetail.statsTokens')}</p>
+          <p className="stat-value">{session.totalTokens > 0 ? `${(session.totalTokens / 1000).toFixed(1)}K` : '-'}</p>
         </div>
         <div className="stat-card">
-          <p className="stat-label">总费用</p>
-          <p className="stat-value">${session.totalCost.toFixed(4)}</p>
-        </div>
-        <div className="stat-card">
-          <p className="stat-label">日期</p>
+          <p className="stat-label">{t('sessionDetail.statsDate')}</p>
           <p className="stat-value text-lg">{new Date(session.startedAt).toLocaleDateString()}</p>
         </div>
       </div>
 
       {/* Messages */}
-      <div className="card p-6">
-        <h3 className="text-base font-semibold mb-5">对话记录</h3>
+      <div className="card card-bordered p-4">
+        <h3 className="text-base font-semibold mb-5">{t('sessionDetail.conversation')}</h3>
         <div className="space-y-4">
           {messages.map((msg) => (
             <div

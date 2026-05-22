@@ -3,7 +3,7 @@ generator client {
 }
 
 datasource db {
-  provider = "mysql"
+  provider = "sqlite"
   url      = env("DATABASE_URL")
 }
 
@@ -12,10 +12,28 @@ model User {
   email     String   @unique
   password  String
   name      String   @default("")
+  role      String   @default("user")
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
   @@map("users")
+}
+
+model SystemProvider {
+  id              String   @id @default(uuid())
+  name            String   @unique
+  icon            String   @default("")
+  type            String   @default("official")
+  website         String   @default("")
+  openaiApiBase   String?  @map("openai_api_base")
+  anthropicApiBase String? @map("anthropic_api_base")
+  googleApiBase   String?  @map("google_api_base")
+  sort            Int      @default(0)
+  isActive        Boolean  @default(true) @map("is_active")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  @@map("system_providers")
 }
 
 model UserProvider {
@@ -76,7 +94,7 @@ model SessionMessage {
   userId    String   @map("user_id")
   sessionId String   @map("session_id")
   role      String
-  content   String   @db.Text
+  content   String
   tokens    Int      @default(0)
   createdAt DateTime @default(now()) @map("created_at")
 
@@ -115,7 +133,7 @@ model BudgetAlert {
 model CompareTest {
   id        String   @id @default(uuid())
   userId    String   @map("user_id")
-  prompt    String   @db.Text
+  prompt    String
   models    String
   responses String   @default("[]")
   status    String   @default("pending")
@@ -145,4 +163,47 @@ model Recommendation {
   updatedAt        DateTime @default(now()) @map("updated_at")
 
   @@map("recommendations")
+}
+
+model Ad {
+  id          String   @id @default(uuid())
+  type        String
+  title       String   @default("")
+  htmlContent String   @default("") @map("html_content")
+  textContent String   @default("") @map("text_content")
+  linkUrl     String   @default("") @map("link_url")
+  width       Int      @default(0)
+  height      Int      @default(0)
+  enabled     Int      @default(0)
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("ads")
+}
+
+model DeviceStat {
+  id         String   @id @default(uuid())
+  deviceId   String   @unique @map("device_id")
+  usageCount Int      @default(1) @map("usage_count")
+  firstSeen  DateTime @default(now()) @map("first_seen")
+  lastSeen   DateTime @default(now()) @map("last_seen")
+
+  @@map("device_stats")
+}
+
+model UsageLog {
+  id        String   @id @default(uuid())
+  deviceId  String   @map("device_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([createdAt])
+  @@map("usage_logs")
+}
+
+model AppSetting {
+  id    String @id @default(uuid())
+  key   String @unique
+  value String
+
+  @@map("app_settings")
 }

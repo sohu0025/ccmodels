@@ -1,7 +1,11 @@
-import { app, BrowserWindow } from 'electron';
+import { app, BrowserWindow, dialog } from 'electron';
+import path from 'node:path';
+import fs from 'node:fs';
+import { randomUUID } from 'node:crypto';
 import { createMainWindow } from './window';
 import { registerIpcHandlers } from './ipc-handlers';
-import { initDatabase, closeDatabase } from './database';
+import { initDatabase, closeDatabase, getDb } from './database';
+import { getSettings, updateSettings } from './database/settings';
 import { startProxy } from './proxy';
 import { initConfigManager } from './config-manager';
 import { stopConfigWatcher } from './config-manager/watcher';
@@ -11,8 +15,17 @@ import { startBudgetChecking, stopBudgetChecking } from './budget-checker';
 import { startAllMcpServers, stopAllMcpServers } from './mcp-manager';
 import { startSyncDaemon, stopSyncDaemon } from './sync';
 import { initAutoUpdater } from './updater';
+import { startPort80Proxy, stopPort80Proxy } from './port80-proxy';
+import { initSentry } from './sentry';
 
 let mainWindow: BrowserWindow | null = null;
+
+// Set app identity for Windows
+app.setAppUserModelId('io.ccmodels.app');
+process.title = 'CC Models';
+
+// Ensure consistent database path across dev and production
+app.setPath('userData', path.join(app.getPath('appData'), 'CC Models'));
 
 app.on('will-quit', () => {
   stopSpeedTesting();
@@ -20,22 +33,108 @@ app.on('will-quit', () => {
   stopAllMcpServers();
   stopSyncDaemon();
   stopConfigWatcher();
+  stopPort80Proxy();
   closeDatabase();
+});
+
+// Global error handler to prevent silent crashes from blocking UI startup
+process.on('uncaughtException', (err) => {
+  console.error('[CC Models] Uncaught exception:', err);
+});
+process.on('unhandledRejection', (reason) => {
+  console.error('[CC Models] Unhandled rejection:', reason);
 });
 
 async function bootstrap() {
   await app.whenReady();
   mainWindow = createMainWindow();
-  initDatabase();
-  startProxy();
-  initConfigManager();
-  initTray(mainWindow);
-  registerIpcHandlers(mainWindow);
-  if (mainWindow) initAutoUpdater(mainWindow);
-  startAllMcpServers();
-  startSyncDaemon();
-  startSpeedTesting();
-  startBudgetChecking();
+  try {
+    initSentry();
+    initDatabase();
+    // Read installer-config.json from app resources if present
+    try {
+      const resourcePath = app.isPackaged
+        ? path.join(process.resourcesPath, 'installer-config.json')
+        : path.join(__dirname, '../../installer-config.json');
+      if (fs.existsSync(resourcePath)) {
+        const installerConfig = JSON.parse(fs.readFileSync(resourcePath, 'utf-8'));
+        if (installerConfig.serverUrl) {
+          updateSettings({ serverUrl: installerConfig.serverUrl });
+          console.log('[CC Models] Applied server URL from installer config:', installerConfig.serverUrl);
+        }
+      }
+    } catch (e) {
+      console.error('[CC Models] Failed to read installer config:', e);
+    }
+
+    startProxy().catch((err) => console.error('[CC Models]', err.message));
+    try {
+      initConfigManager();
+    } catch (initErr: any) {
+      console.error('[CC Models] Config manager init failed:', initErr);
+    }
+    initTray(mainWindow);
+    registerIpcHandlers(mainWindow);
+    if (mainWindow) initAutoUpdater(mainWindow);
+    startAllMcpServers();
+    startSyncDaemon();
+    checkForUpdatesOnStartup();
+    startSpeedTesting();
+    startBudgetChecking();
+    startPort80Proxy();
+    trackDevice();
+  } catch (err) {
+    console.error('[CC Models] Failed to initialize native modules (better-sqlite3):', err);
+    console.error('[CC Models] UI will load but database features are unavailable.');
+  }
+}
+
+function trackDevice(): void {
+  try {
+    const db = getDb();
+    let row = db.prepare("SELECT value FROM settings WHERE key = 'deviceId'").get() as { value: string } | undefined;
+    const isNew = !row;
+    if (isNew) {
+      row = { value: randomUUID() };
+      db.prepare("INSERT OR REPLACE INTO settings (key, value) VALUES ('deviceId', ?)").run(row.value);
+    }
+    const urlRow = db.prepare("SELECT value FROM settings WHERE key = 'syncServerUrl'").get() as { value: string } | undefined;
+    const serverUrl = urlRow?.value || 'http://localhost:3000';
+    if (isNew) {
+      fetch(`${serverUrl}/api/stats/register`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ deviceId: row!.value }) }).catch(() => {});
+    } else {
+      fetch(`${serverUrl}/api/stats/heartbeat`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ deviceId: row!.value }) }).catch(() => {});
+    }
+  } catch {} // Non-critical
+}
+
+async function checkForUpdatesOnStartup(): Promise<void> {
+  try {
+    const settings = getSettings();
+    const serverUrl = settings.serverUrl;
+    if (!serverUrl) return;
+    const currentVersion = app.getVersion();
+    const res = await fetch(`${serverUrl}/api/system-settings`, { signal: AbortSignal.timeout(5000) });
+    if (!res.ok) return;
+    const data = await res.json() as any;
+    const latestVersion = (data.latestVersion || '').trim();
+    const downloadUrl = (data.downloadUrl || '').trim();
+    if (!latestVersion || latestVersion === currentVersion) return;
+    // Different version → prompt update
+    const win = BrowserWindow.getAllWindows()[0];
+    if (!win) return;
+    const result = await dialog.showMessageBox(win, {
+      type: 'info',
+      title: '发现新版本',
+      message: `当前版本: v${currentVersion}\n最新版本: v${latestVersion}`,
+      detail: downloadUrl ? '是否前往下载页面获取最新版本？' : '',
+      buttons: downloadUrl ? ['下载更新', '忽略'] : ['知道了'],
+    });
+    if (result.response === 0 && downloadUrl) {
+      const { shell } = require('electron');
+      shell.openExternal(downloadUrl);
+    }
+  } catch {} // Non-critical
 }
 
 app.on('window-all-closed', () => {

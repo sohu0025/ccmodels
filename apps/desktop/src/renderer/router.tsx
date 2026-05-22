@@ -7,19 +7,20 @@ import { SessionDetail } from './pages/SessionDetail';
 import { SpeedTest } from './pages/SpeedTest';
 import { Budget } from './pages/Budget';
 import { Providers } from './pages/Providers';
-import { ProviderDetail } from './pages/ProviderDetail';
 import { Mcp } from './pages/Mcp';
 import { Skills } from './pages/Skills';
 import { Prompts } from './pages/Prompts';
 import { Compare } from './pages/Compare';
 import { Recommendations } from './pages/Recommendations';
 import { Settings } from './pages/Settings';
+import { AdsManager } from './pages/AdsManager';
 
 export function AppRouter() {
   return (
     <Routes>
       <Route element={<Layout />}>
-        <Route path="/" element={<Dashboard />} />
+        <Route path="/" element={<Providers />} />
+        <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/usage" element={<Usage />} />
         <Route path="/sessions" element={<Sessions />} />
         <Route path="/sessions/:id" element={<SessionDetail />} />
@@ -30,8 +31,7 @@ export function AppRouter() {
         <Route path="/compare" element={<Compare />} />
         <Route path="/recommendations" element={<Recommendations />} />
         <Route path="/budget" element={<Budget />} />
-        <Route path="/providers" element={<Providers />} />
-        <Route path="/providers/:id" element={<ProviderDetail />} />
+        <Route path="/ads" element={<AdsManager />} />
         <Route path="/settings" element={<Settings />} />
       </Route>
     </Routes>

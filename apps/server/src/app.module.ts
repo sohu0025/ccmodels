@@ -7,10 +7,11 @@ import { SessionModule } from './modules/session/session.module';
 import { ProviderModule } from './modules/provider/provider.module';
 import { CompareModule } from './modules/compare/compare.module';
 import { RecommendationModule } from './modules/recommendation/recommendation.module';
+import { AdminModule } from './modules/admin/admin.module';
 
 @Module({
   imports: [
-    JwtModule.register({ secret: process.env.JWT_SECRET || 'cc-switch-secret', signOptions: { expiresIn: '7d' } }),
+    JwtModule.register({ secret: process.env.JWT_SECRET || 'cc-models-secret', signOptions: { expiresIn: '7d' } }),
     AuthModule,
     SyncModule,
     UsageModule,
@@ -18,6 +19,7 @@ import { RecommendationModule } from './modules/recommendation/recommendation.mo
     ProviderModule,
     CompareModule,
     RecommendationModule,
+    AdminModule,
   ],
 })
 export class AppModule {}

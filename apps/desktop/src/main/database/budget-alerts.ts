@@ -32,7 +32,7 @@ export function getBudgetStatus(): BudgetStatus {
       VALUES (?, ?, ?, ?, ?)
     `).run(id, month, totalCost, limitAmount, settings.budgetNotifyThreshold);
 
-    enqueueSync('budget_alerts', id, 'create', {
+    enqueueSync('budget_alerts', id, 'INSERT', {
       id,
       month,
       limitAmount,
@@ -81,7 +81,7 @@ export function markBudgetNotified(): void {
   getDb().prepare("UPDATE budget_alerts SET notified = 1, updated_at = datetime('now') WHERE month = ?").run(month);
 
   const status = getBudgetStatus();
-  enqueueSync('budget_alerts', `budget-${month}`, 'update', {
+  enqueueSync('budget_alerts', `budget-${month}`, 'UPDATE', {
     id: `budget-${month}`,
     month,
     limitAmount: status.limitAmount,

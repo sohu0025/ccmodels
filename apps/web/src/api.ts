@@ -39,4 +39,21 @@ export const api = {
   sessions: { list: (page = 1, pageSize = 20, search?: string) => request(`/api/sessions?page=${page}&pageSize=${pageSize}${search ? `&search=${search}` : ''}`), get: (id: string) => request(`/api/sessions/${id}`) },
   compare: { list: () => request('/api/compare'), create: (data: any) => request('/api/compare', { method: 'POST', body: JSON.stringify(data) }) },
   providers: { list: () => request('/api/providers') },
+  systemProviders: { list: () => request('/api/system-providers') },
+  admin: {
+    systemProviders: {
+      list: () => request('/api/admin/system-providers'),
+      get: (id: string) => request(`/api/admin/system-providers/${id}`),
+      create: (data: any) => request('/api/admin/system-providers', { method: 'POST', body: JSON.stringify(data) }),
+      update: (id: string, data: any) => request(`/api/admin/system-providers/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+      remove: (id: string) => request(`/api/admin/system-providers/${id}`, { method: 'DELETE' }),
+    },
+    settings: {
+      list: () => request('/api/admin/settings'),
+      get: (key: string) => request(`/api/admin/settings/${key}`),
+      update: (key: string, value: string) => request(`/api/admin/settings/${key}`, { method: 'PUT', body: JSON.stringify({ key, value }) }),
+    },
+    buildInstaller: () => request('/api/admin/build-installer', { method: 'POST' }),
+    buildInstallerStatus: () => request('/api/admin/build-installer/status'),
+  },
 };
