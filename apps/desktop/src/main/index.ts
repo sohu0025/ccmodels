@@ -1,4 +1,4 @@
-import { app, BrowserWindow, dialog } from 'electron';
+import { app, BrowserWindow, dialog, shell } from 'electron';
 import path from 'node:path';
 import fs from 'node:fs';
 import { randomUUID } from 'node:crypto';
@@ -131,10 +131,9 @@ async function checkForUpdatesOnStartup(): Promise<void> {
       buttons: downloadUrl ? ['下载更新', '忽略'] : ['知道了'],
     });
     if (result.response === 0 && downloadUrl) {
-      const { shell } = require('electron');
       shell.openExternal(downloadUrl);
     }
-  } catch {} // Non-critical
+  } catch { /* Non-critical */ }
 }
 
 app.on('window-all-closed', () => {
