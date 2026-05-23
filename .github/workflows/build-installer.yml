@@ -50,9 +50,10 @@ jobs:
       - name: Build shared package
         run: pnpm --filter @ccmodels/shared build
 
-      - name: Write installer config
+      - name: Write installer config & set version
         shell: node {0}
         run: |
+          const fs = require('fs');
           const data = {
             serverUrl: (process.env.SERVER_URL || '').trim(),
             websiteUrl: (process.env.WEBSITE_URL || '').trim(),
@@ -63,8 +64,14 @@ jobs:
           for (const [k, v] of Object.entries(data)) {
             if (v) config[k] = v;
           }
-          require('fs').writeFileSync('apps/desktop/installer-config.json', JSON.stringify(config, null, 2));
+          fs.writeFileSync('apps/desktop/installer-config.json', JSON.stringify(config, null, 2));
           console.log('Installer config:', JSON.stringify(config));
+          if (data.latestVersion) {
+            const pkg = JSON.parse(fs.readFileSync('apps/desktop/package.json', 'utf-8'));
+            pkg.version = data.latestVersion;
+            fs.writeFileSync('apps/desktop/package.json', JSON.stringify(pkg, null, 2) + '\n');
+            console.log('Set package version to:', data.latestVersion);
+          }
         env:
           SERVER_URL: ${{ github.event.client_payload.serverUrl || inputs.serverUrl }}
           WEBSITE_URL: ${{ github.event.client_payload.websiteUrl || inputs.websiteUrl }}
