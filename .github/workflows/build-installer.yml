@@ -3,6 +3,11 @@ on:
   repository_dispatch:
     types: [build-installer]
   workflow_dispatch:
+    inputs:
+      serverUrl:
+        description: 'Remote server URL (e.g. https://your-server.com:3000)'
+        required: false
+        default: ''
 
 env:
   NODE_VERSION: '22'
@@ -35,7 +40,13 @@ jobs:
 
       - name: Write installer config
         run: |
-          echo '${{ github.event.client_payload }}' > apps/desktop/installer-config.json
+          PAYLOAD='${{ github.event.client_payload }}'
+          if [ "$PAYLOAD" = "null" ] || [ -z "$PAYLOAD" ]; then
+            echo "{ \"serverUrl\": \"${{ inputs.serverUrl }}\" }" > apps/desktop/installer-config.json
+          else
+            echo "$PAYLOAD" > apps/desktop/installer-config.json
+          fi
+          cat apps/desktop/installer-config.json
 
       - name: Build desktop app
         run: |
@@ -59,7 +70,6 @@ jobs:
             apps/desktop/release/*.dmg
             apps/desktop/release/*.AppImage
             apps/desktop/release/*.deb
-            apps/desktop/release/*.rpm
             apps/desktop/release/*.exe
             apps/desktop/release/*.zip
             apps/desktop/release/*.yml
