@@ -23,9 +23,9 @@ export function Sidebar() {
     <aside className="sidebar">
       <div className="px-5 py-6">
         <div className="flex items-center gap-2.5">
-          <img src="/logo.png" alt="CC Models" className="w-7 h-7 rounded-lg" />
+          <img src={`${import.meta.env.BASE_URL}logo.png`} alt="CC Models" className="w-7 h-7 rounded-lg" />
           <div>
-            <img src="/text.png" alt="CC Models" className="h-3.5 w-auto" />
+            <img src={`${import.meta.env.BASE_URL}text.png`} alt="CC Models" className="h-3.5 w-auto" />
             <p className="text-xs text-text-tertiary leading-none">{t('sidebar.subtitle')}</p>
           </div>
         </div>

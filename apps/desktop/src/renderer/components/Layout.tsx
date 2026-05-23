@@ -52,8 +52,8 @@ export function Layout() {
         <header className="flex items-center justify-between px-3 h-10 border-b border-border bg-white/80 backdrop-blur-xl shrink-0" style={{ WebkitAppRegion: 'drag' } as React.CSSProperties}>
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-2">
-              <img src="/logo.png" alt="CC Models" className="w-6 h-6 rounded-md" />
-              <img src="/text.png" alt="CC Models" className="h-3 w-auto" />
+              <img src={`${import.meta.env.BASE_URL}logo.png`} alt="CC Models" className="w-6 h-6 rounded-md" />
+              <img src={`${import.meta.env.BASE_URL}text.png`} alt="CC Models" className="h-3 w-auto" />
             </div>
           </div>
 
