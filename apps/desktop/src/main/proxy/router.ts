@@ -5,6 +5,7 @@ export interface RouteResult {
   targetUrl: string;
   headers: Record<string, string>;
   providerId: string;
+  baseUrl: string;
 }
 
 /**
@@ -82,5 +83,6 @@ export function resolveRoute(
     targetUrl,
     headers,
     providerId: provider.id,
+    baseUrl,
   };
 }

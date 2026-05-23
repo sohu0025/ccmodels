@@ -158,11 +158,19 @@ function handleRequest(req: any, res: any, body: string, startTime: number): voi
         const modelId = extractModel(body, requestPath);
         // Override model only if client's model isn't in provider's list
         let actualModelId = modelId;
+        let omitModel = false;
         {
             const provider = getProviderById(route.providerId);
-            if (provider && provider.models.length > 0) {
-                if (modelId === 'unknown' || !provider.models.includes(modelId)) {
-                    actualModelId = provider.models[0];
+            if (provider) {
+                if (provider.models.length > 0) {
+                    if (modelId === 'unknown' || !provider.models.includes(modelId)) {
+                        actualModelId = provider.models[0];
+                    }
+                } else if (needsGoogleConversion) {
+                    // Google model names (gemini-*) won't work with OpenAI providers.
+                    // If the provider has no models configured, omit the model field
+                    // so the provider uses its default model.
+                    omitModel = true;
                 }
             }
         }
@@ -232,7 +240,7 @@ function handleRequest(req: any, res: any, body: string, startTime: number): voi
                 isStreaming = requestPath.includes('streamGenerateContent');
                 try {
                     const json = JSON.parse(requestBody);
-                    requestBody = googleToChat(json, actualModelId, isStreaming);
+                    requestBody = googleToChat(json, actualModelId, isStreaming, omitModel);
                 }
                 catch (e) {
                     console.error('[CC Models] Failed to transform Google request:', e);
@@ -251,7 +259,16 @@ function handleRequest(req: any, res: any, body: string, startTime: number): voi
             } catch {}
         }
         // Replace model name in request body if overridden
-        if (actualModelId !== modelId) {
+        if (omitModel) {
+            // Remove model field entirely so the provider uses its default
+            try {
+                const json = JSON.parse(requestBody);
+                delete json.model;
+                requestBody = JSON.stringify(json);
+            } catch (e) {
+                console.error('[CC Models] Failed to remove model:', e);
+            }
+        } else if (actualModelId !== modelId) {
             try {
                 const json = JSON.parse(requestBody);
                 json.model = actualModelId;
@@ -287,14 +304,17 @@ function handleRequest(req: any, res: any, body: string, startTime: number): voi
                 addSessionMessage(sessionId, 'user', userMsg.slice(0, 10000), Math.max(1, Math.round(userMsg.length / 4)));
             }
         }
-        // Parse the target URL, rewriting paths for Codex, Anthropic, or Google API
-        const targetUrlStr = isResponsesApi
-            ? route.targetUrl.replace('/responses', '/chat/completions')
-            : needsAnthropicConversion
-                ? route.targetUrl.replace('/v1/messages', '/v1/chat/completions')
-                : needsGoogleConversion
-                    ? route.targetUrl.replace(/\/v1beta\/models\/[^:]+:(?:stream)?generateContent/i, '/v1/chat/completions')
-                    : route.targetUrl;
+        // Parse the target URL, rewriting paths for Codex, Anthropic, or Google API.
+        // Use the base URL from the route to avoid path duplication when the base
+        // URL already includes a path prefix (e.g. /v1, /v4).
+        const baseUrlObj = new URL(route.baseUrl);
+        const baseHasPath = baseUrlObj.pathname !== '/' && baseUrlObj.pathname !== '';
+        // When the base URL already has a path (e.g. /v1), the API endpoint is
+        // relative (chat/completions). Otherwise, use v1/chat/completions.
+        const apiEndpoint = baseHasPath ? 'chat/completions' : 'v1/chat/completions';
+        const targetUrlStr = isResponsesApi || needsAnthropicConversion || needsGoogleConversion
+            ? route.baseUrl.replace(/\/$/, '') + '/' + apiEndpoint
+            : route.targetUrl;
         const targetUrl = new URL(targetUrlStr);
         // Google API: model is in URL path, rewrite if overridden
         if (actualModelId !== modelId && targetUrl.pathname.includes('/models/')) {
@@ -963,9 +983,11 @@ function anthropicToChat(json) {
  * Convert Google Gemini API request body to Chat Completions format.
  * Google format uses contents[] + parts[], system_instruction, and generationConfig.
  */
-function googleToChat(json, modelId, stream) {
+function googleToChat(json, modelId, stream, omitModel) {
     const chat = {};
-    chat.model = modelId;
+    if (!omitModel && modelId) {
+        chat.model = modelId;
+    }
     chat.stream = stream;
     const messages = [];
     // Convert system_instruction → system message at the start
@@ -1059,10 +1081,11 @@ function chatToGoogle(body, modelId) {
     const chat = JSON.parse(body);
     // Convert OpenAI error format to Google Gemini error format
     if (chat.error) {
+        const errMsg = chat.error.message || (typeof chat.error === 'string' ? chat.error : JSON.stringify(chat.error)) || 'Unknown error';
         const googleError = {
             error: {
                 code: chat.error.code || 400,
-                message: chat.error.message || 'Unknown error',
+                message: errMsg,
                 status: chat.error.type || 'INVALID_ARGUMENT',
             },
         };
