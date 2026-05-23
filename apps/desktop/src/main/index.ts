@@ -47,6 +47,7 @@ process.on('unhandledRejection', (reason) => {
 
 async function bootstrap() {
   await app.whenReady();
+  app.setLoginItemSettings({ openAtLogin: true });
   mainWindow = createMainWindow();
   try {
     initSentry();
