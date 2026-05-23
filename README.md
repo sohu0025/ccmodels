@@ -11,8 +11,8 @@
 [![Prisma](https://img.shields.io/badge/Prisma-5-2D3748?logo=prisma&logoColor=white)](https://www.prisma.io/)
 
 </div>
-
-**CC Models** 是一个开源的 AI 模型代理网关 + 桌面管理应用。它充当本地 HTTP 代理，将各种 AI CLI 工具的请求路由到不同的模型供应商，并提供统一的使用统计、会话管理、预算告警等功能。
+<p>**CC Models** 名称取自 Claude Code 缩写拼接 Models，寓意依托代码能力，可自由调度、适配多款 AI 模型，实现多模型灵活调用使用。</p>
+**CC Models** 由 DeepSeek + Claude Code 全自动编码开发，全程无人工代码编写。作为开源 AI 模型代理网关与桌面管理应用，以本地 HTTP 代理形式转发各类 AI 命令行工具请求，可对接多模型服务商，兼具用量统计、会话管理、预算告警等功能。
 
 简单说：**一个应用管理所有 AI 工具**。
 
@@ -211,4 +211,4 @@ MIT License
 
 ## 相关项目
 
-- [CC Switch](https://ccswitch.io) — 原始灵感来源
+- [大象中转API](https://api.daxiang.club/) — 合作伙伴
