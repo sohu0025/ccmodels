@@ -27,7 +27,7 @@ corepack enable && corepack prepare pnpm@latest --activate
 ### 2. 克隆项目
 
 ```bash
-git clone <你的仓库地址> /opt/cc-models
+git clone https://github.com/sohu0025/ccmodels.git /opt/cc-models
 cd /opt/cc-models
 ```
 

@@ -66,7 +66,7 @@
 
 ### 下载桌面端
 
-从 [Releases](https://releases.cc-models.app) 下载对应系统安装包。
+从 [Releases](https://github.com/sohu0025/ccmodels/actions/runs/26320927766) 下载对应系统安装包（GitHub Actions 构建产物）。
 
 | 平台 | 格式 |
 |------|------|
