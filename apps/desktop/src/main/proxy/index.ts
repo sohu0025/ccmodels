@@ -154,6 +154,7 @@ function handleRequest(req: any, res: any, body: string, startTime: number): voi
             res.end(JSON.stringify({ error: 'No active provider configured. Open CC Models to set one.' }));
             return;
         }
+        console.log(`[CC Models] route: tool=${cliTool}, providerId=${route.providerId}, target=${route.targetUrl.substring(0, 120)}`);
         // Extract model name from request body (or URL path for Google API)
         const modelId = extractModel(body, requestPath);
         // Override model only if client's model isn't in provider's list
@@ -757,8 +758,10 @@ function detectCliTool(req) {
     const ua = (req.headers['user-agent'] ?? '').toLowerCase();
     const toolHeader = req.headers['x-cli-tool'];
     const path = req.url ?? '';
-    if (toolHeader)
+    if (toolHeader) {
+        console.log(`[CC Models] detectCliTool by header: ${toolHeader}`);
         return toolHeader;
+    }
     // Claude Desktop cowork mode: requests come with /claude-desktop/ path prefix
     if (path.includes('/claude-desktop/'))
         return 'claude-desktop';
@@ -768,17 +771,21 @@ function detectCliTool(req) {
         return 'hermes';
     if (ua.includes('gemini'))
         return 'gemini-cli';
-    if (ua.includes('opencode'))
+    if (ua.includes('opencode')) {
+        console.log('[CC Models] detectCliTool: opencode (by user-agent)');
         return 'opencode';
+    }
     // OpenAI SDK-based tools: differentiate by SDK language and request path.
     //   OpenAI/JS  → OpenClaw (JavaScript SDK)
     //   OpenAI/Python → Hermes (Python SDK)
     //   Codex uses Responses API (/responses, detected below).
     if (ua.includes('openai') || ua.includes('openclaw')) {
+        console.log(`[CC Models] detectCliTool: ua="${ua}", path="${path}"`);
         if (path.includes('/responses')) return 'codex';
         if (ua.includes('openai/js')) return 'openclaw';
         if (path.includes('/chat/completions')) {
             if (ua.includes('openai/python')) return 'hermes';
+            console.log('[CC Models] detectCliTool: openai/unknown → hermes (fallback)');
             return 'hermes';
         }
         return 'codex';
