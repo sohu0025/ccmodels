@@ -223,7 +223,7 @@ export class AdminService {
           },
           body: JSON.stringify({
             event_type: 'build-installer',
-            client_payload: { serverUrl },
+            client_payload: { serverUrl, websiteUrl: settings.websiteUrl || '', latestVersion: settings.latestVersion || '', downloadUrl: settings.downloadUrl || '' },
           }),
         },
       );

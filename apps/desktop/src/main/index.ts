@@ -58,9 +58,22 @@ async function bootstrap() {
         : path.join(__dirname, '../../installer-config.json');
       if (fs.existsSync(resourcePath)) {
         const installerConfig = JSON.parse(fs.readFileSync(resourcePath, 'utf-8'));
+        const updates: Record<string, string> = {};
         if (installerConfig.serverUrl) {
-          updateSettings({ serverUrl: installerConfig.serverUrl });
+          updates.serverUrl = installerConfig.serverUrl;
           console.log('[CC Models] Applied server URL from installer config:', installerConfig.serverUrl);
+        }
+        if (installerConfig.websiteUrl) {
+          updates.websiteUrl = installerConfig.websiteUrl;
+        }
+        if (installerConfig.latestVersion) {
+          updates.latestVersion = installerConfig.latestVersion;
+        }
+        if (installerConfig.downloadUrl) {
+          updates.downloadUrl = installerConfig.downloadUrl;
+        }
+        if (Object.keys(updates).length > 0) {
+          updateSettings(updates as any);
         }
       }
     } catch (e) {
@@ -111,14 +124,24 @@ function trackDevice(): void {
 async function checkForUpdatesOnStartup(): Promise<void> {
   try {
     const settings = getSettings();
-    const serverUrl = settings.serverUrl;
-    if (!serverUrl) return;
     const currentVersion = app.getVersion();
-    const res = await fetch(`${serverUrl}/api/system-settings`, { signal: AbortSignal.timeout(5000) });
-    if (!res.ok) return;
-    const data = await res.json() as any;
-    const latestVersion = (data.latestVersion || '').trim();
-    const downloadUrl = (data.downloadUrl || '').trim();
+    // Try fetching from server first, fall back to installer-baked values
+    let latestVersion = '';
+    let downloadUrl = '';
+    if (settings.serverUrl) {
+      try {
+        const res = await fetch(`${settings.serverUrl}/api/system-settings`, { signal: AbortSignal.timeout(5000) });
+        if (res.ok) {
+          const data = await res.json() as any;
+          latestVersion = (data.latestVersion || '').trim();
+          downloadUrl = (data.downloadUrl || '').trim();
+        }
+      } catch { /* fall through to baked-in values */ }
+    }
+    if (!latestVersion) {
+      latestVersion = (settings as any).latestVersion || '';
+      downloadUrl = (settings as any).downloadUrl || '';
+    }
     if (!latestVersion || latestVersion === currentVersion) return;
     // Different version → prompt update
     const win = BrowserWindow.getAllWindows()[0];

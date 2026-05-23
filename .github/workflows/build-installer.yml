@@ -8,6 +8,18 @@ on:
         description: 'Remote server URL (e.g. https://your-server.com:3000)'
         required: false
         default: ''
+      websiteUrl:
+        description: 'Website URL'
+        required: false
+        default: ''
+      latestVersion:
+        description: 'Latest version number (e.g. 1.0.1)'
+        required: false
+        default: ''
+      downloadUrl:
+        description: 'Download URL for updates'
+        required: false
+        default: ''
 
 env:
   NODE_VERSION: '22'
@@ -41,12 +53,23 @@ jobs:
       - name: Write installer config
         shell: node {0}
         run: |
-          const serverUrl = (process.env.SERVER_URL || '').trim();
-          const config = serverUrl ? { serverUrl } : {};
+          const data = {
+            serverUrl: (process.env.SERVER_URL || '').trim(),
+            websiteUrl: (process.env.WEBSITE_URL || '').trim(),
+            latestVersion: (process.env.LATEST_VERSION || '').trim(),
+            downloadUrl: (process.env.DOWNLOAD_URL || '').trim(),
+          };
+          const config = {};
+          for (const [k, v] of Object.entries(data)) {
+            if (v) config[k] = v;
+          }
           require('fs').writeFileSync('apps/desktop/installer-config.json', JSON.stringify(config, null, 2));
           console.log('Installer config:', JSON.stringify(config));
         env:
           SERVER_URL: ${{ github.event.client_payload.serverUrl || inputs.serverUrl }}
+          WEBSITE_URL: ${{ github.event.client_payload.websiteUrl || inputs.websiteUrl }}
+          LATEST_VERSION: ${{ github.event.client_payload.latestVersion || inputs.latestVersion }}
+          DOWNLOAD_URL: ${{ github.event.client_payload.downloadUrl || inputs.downloadUrl }}
 
       - name: Build desktop app
         run: |

@@ -263,24 +263,40 @@ export function registerIpcHandlers(_mainWindow: BrowserWindow): void {
   ipcMain.handle('system-settings:get', () => safeCall(async () => {
     const settings = settingDb.getSettings();
     const serverUrl = settings.serverUrl;
-    if (!serverUrl) return { websiteUrl: 'https://cc-models.app', latestVersion: '', downloadUrl: '' };
-    const res = await fetch(`${serverUrl}/api/system-settings`, { signal: AbortSignal.timeout(5000) });
-    if (res.ok) return res.json();
-    return { websiteUrl: 'https://cc-models.app', latestVersion: '', downloadUrl: '' };
+    const bakedIn = {
+      websiteUrl: (settings as any).websiteUrl || 'https://cc-models.app',
+      latestVersion: (settings as any).latestVersion || '',
+      downloadUrl: (settings as any).downloadUrl || '',
+    };
+    if (!serverUrl) return bakedIn;
+    try {
+      const res = await fetch(`${serverUrl}/api/system-settings`, { signal: AbortSignal.timeout(5000) });
+      if (res.ok) return res.json();
+    } catch { /* fall back to baked-in values */ }
+    return bakedIn;
   }, { websiteUrl: 'https://cc-models.app', latestVersion: '', downloadUrl: '' }));
 
   ipcMain.handle('update:check', () => safeCall(async () => {
     const currentVersion = app.getVersion();
     const settings = settingDb.getSettings();
     const serverUrl = settings.serverUrl;
-    if (!serverUrl) return { hasUpdate: false, latestVersion: '', downloadUrl: '', currentVersion, error: '未配置服务器地址' };
-    const res = await fetch(`${serverUrl}/api/system-settings`, { signal: AbortSignal.timeout(5000) });
-    if (!res.ok) return { hasUpdate: false, latestVersion: '', downloadUrl: '', currentVersion, error: '服务器不可达' };
-    const data = await res.json() as any;
-    const latestVersion = (data.latestVersion || '').trim();
-    const downloadUrl = (data.downloadUrl || '').trim();
+    let latestVersion = '';
+    let downloadUrl = '';
+    if (serverUrl) {
+      try {
+        const res = await fetch(`${serverUrl}/api/system-settings`, { signal: AbortSignal.timeout(5000) });
+        if (res.ok) {
+          const data = await res.json() as any;
+          latestVersion = (data.latestVersion || '').trim();
+          downloadUrl = (data.downloadUrl || '').trim();
+        }
+      } catch { /* fall through to baked-in values */ }
+    }
+    if (!latestVersion) {
+      latestVersion = ((settings as any).latestVersion || '').trim();
+      downloadUrl = ((settings as any).downloadUrl || '').trim();
+    }
     if (!latestVersion) return { hasUpdate: false, latestVersion: '', downloadUrl: '', currentVersion, error: '' };
-    // Compare versions: different or newer
     const hasUpdate = latestVersion !== currentVersion;
     return { hasUpdate, latestVersion, downloadUrl, currentVersion, error: '' };
   }, { hasUpdate: false, latestVersion: '', downloadUrl: '', currentVersion: '', error: '检查失败' }));
