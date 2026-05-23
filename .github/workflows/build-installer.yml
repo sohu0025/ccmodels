@@ -41,20 +41,12 @@ jobs:
       - name: Write installer config
         shell: node {0}
         run: |
-          const fs = require('fs');
-          const payload = process.env.PAYLOAD;
-          const serverUrl = process.env.SERVER_URL;
-          let config = {};
-          if (payload && payload !== 'null' && payload !== '') {
-            try { config = JSON.parse(payload); } catch {}
-          } else if (serverUrl) {
-            config = { serverUrl };
-          }
-          fs.writeFileSync('apps/desktop/installer-config.json', JSON.stringify(config, null, 2));
+          const serverUrl = (process.env.SERVER_URL || '').trim();
+          const config = serverUrl ? { serverUrl } : {};
+          require('fs').writeFileSync('apps/desktop/installer-config.json', JSON.stringify(config, null, 2));
           console.log('Installer config:', JSON.stringify(config));
         env:
-          PAYLOAD: ${{ github.event.client_payload }}
-          SERVER_URL: ${{ inputs.serverUrl }}
+          SERVER_URL: ${{ github.event.client_payload.serverUrl || inputs.serverUrl }}
 
       - name: Build desktop app
         run: |
