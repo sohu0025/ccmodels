@@ -1196,8 +1196,10 @@ function handleAnthropicSSEStream(proxyRes, res, route, modelId, startTime, sess
                         outputTokens: parsed.usage.completion_tokens ?? parsed.usage.output_tokens ?? 0,
                     };
                 }
-                if (!parsed.choices || !parsed.choices[0])
+                if (!parsed.choices || !parsed.choices[0]) {
+                    if (payload.length < 200) console.log(`[CC Models] SSE skip (no choices): ${payload}`);
                     continue;
+                }
                 const delta = parsed.choices[0].delta;
                 if (!delta)
                     continue;
@@ -1264,6 +1266,8 @@ function handleAnthropicSSEStream(proxyRes, res, route, modelId, startTime, sess
         const cleanAccumulated = stripSystemTags(accumulatedText);
         if (cleanAccumulated) {
             addSessionMessage(sessionId, 'assistant', cleanAccumulated.slice(0, 100000), outTokens);
+        } else {
+            console.log(`[CC Models] No assistant text accumulated for session ${sessionId}, accumulatedText length=${accumulatedText.length}, contentBlockStarted=${contentBlockStarted}`);
         }
         recordSuccess(route.providerId);
         res.end();
