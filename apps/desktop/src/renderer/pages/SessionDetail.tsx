@@ -65,6 +65,7 @@ export function SessionDetail() {
                   }`}>
                     {msg.role === 'user' ? '我' : 'AI'}
                   </span>
+                  <span className="text-xs text-text-tertiary">{new Date(msg.timestamp).toLocaleString()}</span>
                   <span className="text-xs text-text-tertiary">{msg.tokens} tokens</span>
                 </div>
                 <pre className="text-sm whitespace-pre-wrap font-sans text-text-primary">{msg.content}</pre>

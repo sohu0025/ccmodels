@@ -66,7 +66,7 @@ export function SpeedTest() {
       </div>
 
       {/* History */}
-      <div className="card card-bordered overflow-hidden">
+      <div className="card card-bordered">
         <div className="px-5 py-4 border-b border-border">
           <h3 className="text-base font-semibold">{t('speedTest.historyTitle')}</h3>
         </div>
@@ -94,8 +94,8 @@ export function SpeedTest() {
                   </div>
                   <div className="text-right shrink-0 ml-3">
                     <span className="text-sm font-mono">{r.success ? r.latencyMs?.toFixed(0) + 'ms' : '-'}</span>
-                    <span className="text-xs text-text-tertiary ml-3">
-                      {new Date(r.testedAt).toLocaleTimeString()}
+                    <span className="text-xs text-text-tertiary ml-3 whitespace-nowrap">
+                      {new Date(r.testedAt).toLocaleDateString() + ' ' + new Date(r.testedAt).toLocaleTimeString()}
                     </span>
                   </div>
                 </div>

@@ -337,7 +337,7 @@ function SpeedTestSection() {
                         : <span className="text-danger font-medium" title={r.errorMessage || ''}>超时/失败</span>
                       }
                     </td>
-                    <td className="px-4 py-2 text-text-tertiary">{new Date(r.testedAt).toLocaleTimeString()}</td>
+                    <td className="px-4 py-2 text-text-tertiary whitespace-nowrap">{new Date(r.testedAt).toLocaleDateString() + ' ' + new Date(r.testedAt).toLocaleTimeString()}</td>
                   </tr>
                 );
               })}

@@ -32,8 +32,15 @@ export function recordSpeedTest(providerId: string, latencyMs: number, success: 
 
 export function getLatestSpeedTests(limit = 50): SpeedTestRecord[] {
   return getDb().prepare(`
-    SELECT id, provider_id as providerId, model_id as modelId, latency_ms as latencyMs, success, error_message as errorMessage, tested_at as testedAt
-    FROM speed_tests ORDER BY tested_at DESC LIMIT ?
+    SELECT s.id, s.provider_id as providerId, s.model_id as modelId, s.latency_ms as latencyMs, s.success, s.error_message as errorMessage, s.tested_at as testedAt
+    FROM speed_tests s
+    INNER JOIN (
+      SELECT provider_id, MAX(tested_at) as max_at
+      FROM speed_tests
+      GROUP BY provider_id
+    ) g ON s.provider_id = g.provider_id AND s.tested_at = g.max_at
+    ORDER BY s.tested_at DESC
+    LIMIT ?
   `).all(limit) as SpeedTestRecord[];
 }
 

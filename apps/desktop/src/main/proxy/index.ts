@@ -218,9 +218,9 @@ function handleRequest(req: any, res: any, body: string, startTime: number): voi
         let needsAnthropicConversion = false;
         if (!isResponsesApi && (req.url ?? '/').includes('/v1/messages')) {
             const provider = getProviderById(route.providerId);
-            // Only convert for OpenAI-compatible providers; Anthropic-format third-party
-            // endpoints (e.g. DeepSeek /anthropic/) handle Anthropic format natively.
-            if (provider && provider.apiType === 'openai') {
+            // Only convert for OpenAI-compatible providers that DON'T have an
+            // /anthropic endpoint (e.g. DeepSeek /anthropic/ handles Anthropic natively).
+            if (provider && provider.apiType === 'openai' && !route.baseUrl.includes('/anthropic')) {
                 needsAnthropicConversion = true;
                 isStreaming = false;
                 try {
@@ -758,10 +758,7 @@ function detectCliTool(req) {
     const ua = (req.headers['user-agent'] ?? '').toLowerCase();
     const toolHeader = req.headers['x-cli-tool'];
     const path = req.url ?? '';
-    if (toolHeader) {
-        console.log(`[CC Models] detectCliTool by header: ${toolHeader}`);
-        return toolHeader;
-    }
+    if (toolHeader) return toolHeader;
     // Claude Desktop cowork mode: requests come with /claude-desktop/ path prefix
     if (path.includes('/claude-desktop/'))
         return 'claude-desktop';
@@ -771,21 +768,16 @@ function detectCliTool(req) {
         return 'hermes';
     if (ua.includes('gemini'))
         return 'gemini-cli';
-    if (ua.includes('opencode')) {
-        console.log('[CC Models] detectCliTool: opencode (by user-agent)');
-        return 'opencode';
-    }
+    if (ua.includes('opencode')) return 'opencode';
     // OpenAI SDK-based tools: differentiate by SDK language and request path.
     //   OpenAI/JS  → OpenClaw (JavaScript SDK)
     //   OpenAI/Python → Hermes (Python SDK)
     //   Codex uses Responses API (/responses, detected below).
     if (ua.includes('openai') || ua.includes('openclaw')) {
-        console.log(`[CC Models] detectCliTool: ua="${ua}", path="${path}"`);
         if (path.includes('/responses')) return 'codex';
         if (ua.includes('openai/js')) return 'openclaw';
         if (path.includes('/chat/completions')) {
             if (ua.includes('openai/python')) return 'hermes';
-            console.log('[CC Models] detectCliTool: openai/unknown → hermes (fallback)');
             return 'hermes';
         }
         return 'codex';
@@ -1196,10 +1188,7 @@ function handleAnthropicSSEStream(proxyRes, res, route, modelId, startTime, sess
                         outputTokens: parsed.usage.completion_tokens ?? parsed.usage.output_tokens ?? 0,
                     };
                 }
-                if (!parsed.choices || !parsed.choices[0]) {
-                    if (payload.length < 200) console.log(`[CC Models] SSE skip (no choices): ${payload}`);
-                    continue;
-                }
+                if (!parsed.choices || !parsed.choices[0]) continue;
                 const delta = parsed.choices[0].delta;
                 if (!delta)
                     continue;
@@ -1266,8 +1255,6 @@ function handleAnthropicSSEStream(proxyRes, res, route, modelId, startTime, sess
         const cleanAccumulated = stripSystemTags(accumulatedText);
         if (cleanAccumulated) {
             addSessionMessage(sessionId, 'assistant', cleanAccumulated.slice(0, 100000), outTokens);
-        } else {
-            console.log(`[CC Models] No assistant text accumulated for session ${sessionId}, accumulatedText length=${accumulatedText.length}, contentBlockStarted=${contentBlockStarted}`);
         }
         recordSuccess(route.providerId);
         res.end();
@@ -1471,7 +1458,24 @@ function handleChatSSEStream(proxyRes, res, route, modelId, startTime, sessionId
                         completionTokens: parsed.usage.completion_tokens ?? parsed.usage.completionTokens ?? 0,
                     };
                 }
-                if (!parsed.choices || !parsed.choices[0]) continue;
+                if (!parsed.choices || !parsed.choices[0]) {
+                    // Handle Anthropic SSE format events
+                    if (parsed.type === 'content_block_delta' && parsed.delta?.text) {
+                        accumulatedText += parsed.delta.text;
+                    } else if (parsed.type === 'content_block_start' && parsed.content_block?.type === 'text' && parsed.content_block.text) {
+                        accumulatedText += parsed.content_block.text;
+                    } else if (parsed.type === 'message_start' && parsed.message?.content?.[0]?.text) {
+                        accumulatedText += parsed.message.content[0].text;
+                    }
+                    // Anthropic usage from message_delta
+                    if (parsed.type === 'message_delta' && parsed.usage) {
+                        finalUsage = {
+                            promptTokens: parsed.usage.input_tokens ?? 0,
+                            completionTokens: parsed.usage.output_tokens ?? 0,
+                        };
+                    }
+                    continue;
+                }
                 const delta = parsed.choices[0].delta;
                 if (delta?.content) {
                     accumulatedText += delta.content;
@@ -1501,6 +1505,12 @@ function extractFromAnthropicSSE(body) {
             const data = JSON.parse(dataLine.slice(5).trim());
             if (data.type === 'content_block_delta' && data.delta?.type === 'text_delta') {
                 text += data.delta.text || '';
+            }
+            if (data.type === 'content_block_start' && data.content_block?.type === 'text' && data.content_block.text) {
+                text += data.content_block.text || '';
+            }
+            if (data.type === 'message_start' && data.message?.content?.[0]?.text) {
+                text += data.message.content[0].text;
             }
             if (data.type === 'message_stop' || data.type === 'message_delta') {
                 if (data.usage) {
