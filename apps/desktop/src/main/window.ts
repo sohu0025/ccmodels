@@ -4,7 +4,7 @@ import { DEFAULT_DEV_SERVER_PORT } from '@ccmodels/shared';
 
 const isDev = !app.isPackaged;
 
-export function createMainWindow(): BrowserWindow {
+export function createMainWindow(onReady?: () => void): BrowserWindow {
 
   // Set window icon from resources
   const iconPath = app.isPackaged
@@ -31,6 +31,7 @@ export function createMainWindow(): BrowserWindow {
   win.once('ready-to-show', () => {
     console.log('[CC Models] Window ready-to-show, showing now');
     win.show();
+    onReady?.();
   });
 
   win.on('maximize', () => win.unmaximize());

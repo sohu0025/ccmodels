@@ -3,6 +3,7 @@ import path from 'node:path';
 import fs from 'node:fs';
 import { randomUUID } from 'node:crypto';
 import { createMainWindow } from './window';
+import { createSplashWindow, closeSplashWindow } from './splash';
 import { registerIpcHandlers } from './ipc-handlers';
 import { initDatabase, closeDatabase, getDb } from './database';
 import { getSettings, updateSettings } from './database/settings';
@@ -48,7 +49,8 @@ process.on('unhandledRejection', (reason) => {
 async function bootstrap() {
   await app.whenReady();
   app.setLoginItemSettings({ openAtLogin: true });
-  mainWindow = createMainWindow();
+  createSplashWindow();
+  mainWindow = createMainWindow(() => closeSplashWindow());
   try {
     initSentry();
     initDatabase();
