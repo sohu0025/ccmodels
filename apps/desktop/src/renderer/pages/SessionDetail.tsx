@@ -50,21 +50,25 @@ export function SessionDetail() {
           {messages.map((msg) => (
             <div
               key={msg.id}
-              className={`p-4 rounded-xl border ${
-                msg.role === 'user'
-                  ? 'bg-accent/5 border-accent/20'
-                  : 'bg-bg-secondary border-border'
-              }`}
+              className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
             >
-              <div className="flex items-center gap-2 mb-2.5">
-                <span className={`text-xs font-semibold uppercase ${
-                  msg.role === 'user' ? 'text-accent' : 'text-text-secondary'
-                }`}>
-                  {msg.role}
-                </span>
-                <span className="text-xs text-text-tertiary">{msg.tokens} tokens</span>
+              <div
+                className={`p-4 rounded-xl border max-w-[80%] ${
+                  msg.role === 'user'
+                    ? 'bg-accent/5 border-accent/20'
+                    : 'bg-bg-secondary border-border'
+                }`}
+              >
+                <div className="flex items-center gap-2 mb-2.5">
+                  <span className={`text-xs font-semibold uppercase ${
+                    msg.role === 'user' ? 'text-accent' : 'text-text-secondary'
+                  }`}>
+                    {msg.role === 'user' ? '我' : 'AI'}
+                  </span>
+                  <span className="text-xs text-text-tertiary">{msg.tokens} tokens</span>
+                </div>
+                <pre className="text-sm whitespace-pre-wrap font-sans text-text-primary">{msg.content}</pre>
               </div>
-              <pre className="text-sm whitespace-pre-wrap font-sans text-text-primary">{msg.content}</pre>
             </div>
           ))}
         </div>
