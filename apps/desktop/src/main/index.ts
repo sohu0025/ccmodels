@@ -154,9 +154,9 @@ async function checkForUpdatesOnStartup(): Promise<void> {
       title: '发现新版本',
       message: `当前版本: v${currentVersion}\n最新版本: v${latestVersion}`,
       detail: downloadUrl ? '是否前往下载页面获取最新版本？' : '',
-      buttons: downloadUrl ? ['下载更新', '忽略'] : ['知道了'],
+      buttons: downloadUrl ? ['忽略', '下载更新'] : ['知道了'],
     });
-    if (result.response === 0 && downloadUrl) {
+    if (result.response === 1 && downloadUrl) {
       shell.openExternal(downloadUrl);
     }
   } catch { /* Non-critical */ }

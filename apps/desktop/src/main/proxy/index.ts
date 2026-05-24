@@ -168,7 +168,7 @@ function handleRequest(req: any, res: any, body: string, startTime: number): voi
                         actualModelId = provider.models[0];
                     }
                 } else if (needsGoogleConversion) {
-                    // Google model names (gemini-*) won't work with OpenAI providers.
+                    // Model names from Gemini/Claude won't work with OpenAI providers.
                     // If the provider has no models configured, omit the model field
                     // so the provider uses its default model.
                     omitModel = true;
@@ -213,14 +213,14 @@ function handleRequest(req: any, res: any, body: string, startTime: number): voi
             }
         }
         // Detect Anthropic Messages API → Chat Completions conversion needed.
-        // When a client sends /v1/messages (Anthropic format) to an OpenAI-compatible
-        // provider, rewrite the path and body so the request works.
+        // When a client sends /v1/messages (Anthropic format) to a provider that
+        // doesn't have a native Anthropic endpoint, rewrite the path and body.
         let needsAnthropicConversion = false;
         if (!isResponsesApi && (req.url ?? '/').includes('/v1/messages')) {
             const provider = getProviderById(route.providerId);
-            // Only convert for OpenAI-compatible providers that DON'T have an
-            // /anthropic endpoint (e.g. DeepSeek /anthropic/ handles Anthropic natively).
-            if (provider && provider.apiType === 'openai' && !route.baseUrl.includes('/anthropic')) {
+            // Skip only if the provider has a native /anthropic endpoint (e.g. DeepSeek).
+            // Providers with path-prefixed URLs (/v4, /api/paas/v4, etc.) still need conversion.
+            if (provider && provider.apiType !== 'google' && !route.baseUrl.includes('/anthropic')) {
                 needsAnthropicConversion = true;
                 isStreaming = false;
                 try {
@@ -932,14 +932,14 @@ function anthropicToChat(json) {
     chat.stream = json.stream;
     chat.max_tokens = json.max_tokens;
     chat.temperature = json.temperature;
-    if (json.stop_sequence)
-        chat.stop = json.stop_sequence;
     if (json.top_p != null)
         chat.top_p = json.top_p;
-    if (json.top_k != null)
-        chat.top_k = json.top_k;
-    if (json.metadata)
-        chat.metadata = json.metadata;
+    // Only copy Anthropic-specific fields if the provider supports them.
+    // Most OpenAI-compatible providers reject top_k and metadata.
+    if (json.stop_sequences)
+        chat.stop = json.stop_sequences;
+    else if (json.stop_sequence)
+        chat.stop = [json.stop_sequence];
     const messages = [];
     // Anthropic system prompt is a top-level field → prepend as system message
     if (json.system) {
@@ -960,7 +960,7 @@ function anthropicToChat(json) {
                 m.content = msg.content;
             }
             else if (Array.isArray(msg.content)) {
-                m.content = msg.content.map((block) => {
+                const blocks = msg.content.map((block) => {
                     if (block.type === 'text')
                         return { type: 'text', text: block.text };
                     if (block.type === 'image' || block.type === 'image_url') {
@@ -969,8 +969,12 @@ function anthropicToChat(json) {
                     if (block.type === 'tool_use' || block.type === 'tool_result') {
                         return { type: 'text', text: block.text || block.content || JSON.stringify(block) };
                     }
-                    return block;
+                    // Unknown types: convert to text representation
+                    const name = block.name || block.id || block.type || 'unknown';
+                    return { type: 'text', text: block.text || `[${name}: ${JSON.stringify(block.input || block)}]` };
                 });
+                // Simplify single text block to plain string for Chat Completions compatibility
+                m.content = blocks.length === 1 && blocks[0].type === 'text' ? blocks[0].text : blocks;
             }
             messages.push(m);
         }
