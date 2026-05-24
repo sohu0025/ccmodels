@@ -7,7 +7,7 @@ let splashWindow: BrowserWindow | null = null;
 export function createSplashWindow(): void {
   const splashPath = app.isPackaged
     ? path.join(process.resourcesPath, 'splash.png')
-    : path.join(__dirname, '../../resources/splash.png');
+    : path.join(__dirname, '../../assets/splash.png');
 
   // Verify file exists, otherwise skip splash
   if (!fs.existsSync(splashPath)) {

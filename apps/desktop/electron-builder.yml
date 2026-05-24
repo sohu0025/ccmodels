@@ -18,7 +18,7 @@ extraResources:
     to: icon.png
   - from: resources/tray-icon.png
     to: tray-icon.png
-  - from: resources/splash.png
+  - from: assets/splash.png
     to: splash.png
 
 win:
