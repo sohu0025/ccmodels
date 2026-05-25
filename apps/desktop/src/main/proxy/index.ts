@@ -1174,15 +1174,19 @@ function handleAnthropicSSEStream(proxyRes, res, route, modelId, startTime, sess
     };
     proxyRes.on('data', (chunk) => {
         const raw = chunk.toString('utf-8');
+        if (raw.length < 400) console.log("[CC Models] SSE raw chunk:", raw.slice(0, 300));
         buffer += raw;
         const lines = buffer.split('\n');
-        buffer = lines.pop() ?? '';
+        buffer = '';
         for (const line of lines) {
             if (!line.startsWith('data:'))
                 continue;
             const payload = line.slice(5).trim();
             if (payload === '[DONE]')
-                return;
+                continue;
+            // Zhipu/BigModel may send progress events between content chunks
+            const trimmed = payload.trim();
+            if (trimmed === '') continue;
             try {
                 const parsed = JSON.parse(payload);
                 // Capture usage if present (some providers include it mid-stream)
