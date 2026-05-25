@@ -1224,7 +1224,7 @@ function handleAnthropicSSEStream(proxyRes, res, route, modelId, startTime, sess
     let toolCallAccumulated = {};
     proxyRes.on('data', (chunk) => {
         const raw = chunk.toString('utf-8');
-        if (raw.length < 400) console.log("[CC Models] SSE raw chunk:", raw.slice(0, 300));
+        if (raw.length < 400 && deltaCount === 0) console.log("[CC Models] SSE raw chunk:", raw.slice(0, 300));
         buffer += raw;
         const lines = buffer.split('\n');
         // Keep the last (potentially incomplete) line in the buffer for next chunk
@@ -1253,7 +1253,6 @@ function handleAnthropicSSEStream(proxyRes, res, route, modelId, startTime, sess
                     continue;
                 if (!contentBlockStarted) {
                     contentBlockStarted = true;
-                    console.log("[CC Models] Anthropic SSE: sending message_start + content_block_start");
                     writeEvent('message_start', {
                         type: 'message_start',
                         message: {
@@ -1276,9 +1275,6 @@ function handleAnthropicSSEStream(proxyRes, res, route, modelId, startTime, sess
                 if (delta.content) {
                     accumulatedText += delta.content;
                     deltaCount++;
-                    if (deltaCount <= 3) {
-                        console.log("[CC Models] Anthropic SSE: content_block_delta #" + deltaCount + " text=" + delta.content.slice(0, 50));
-                    }
                     writeEvent('content_block_delta', {
                         type: 'content_block_delta',
                         index: 0,
@@ -1316,7 +1312,6 @@ function handleAnthropicSSEStream(proxyRes, res, route, modelId, startTime, sess
                 }
                 if (parsed.choices[0].finish_reason) {
                     finishReason = parsed.choices[0].finish_reason;
-                    console.log("[CC Models] Anthropic SSE: finish_reason=" + finishReason);
                 }
             }
             catch {
@@ -1325,11 +1320,9 @@ function handleAnthropicSSEStream(proxyRes, res, route, modelId, startTime, sess
         }
     });
     proxyRes.on('end', () => {
-        console.log("[CC Models] Anthropic SSE: stream end, accumulatedText length=" + accumulatedText.length + ", deltaCount=" + deltaCount + ", finishReason=" + finishReason + ", writableEnded=" + res.writableEnded + ", toolCallIndex=" + toolCallIndex);
         if (contentBlockStarted) {
             // Close all open content blocks (text block 0 + any tool_use blocks)
             for (let i = 0; i <= toolCallIndex; i++) {
-                console.log("[CC Models] Anthropic SSE: sending content_block_stop for index " + i);
                 writeEvent('content_block_stop', { type: 'content_block_stop', index: i });
             }
         }
@@ -1339,7 +1332,6 @@ function handleAnthropicSSEStream(proxyRes, res, route, modelId, startTime, sess
         if (finishReason === 'stop') stopReason = 'end_turn';
         else if (finishReason === 'length') stopReason = 'max_tokens';
         else if (finishReason === 'tool_calls') stopReason = 'tool_use';
-        console.log("[CC Models] Anthropic SSE: sending message_delta + message_stop");
         writeEvent('message_delta', {
             type: 'message_delta',
             delta: { stop_reason: stopReason, stop_sequence: null },
@@ -1375,7 +1367,7 @@ function handleAnthropicSSEStream(proxyRes, res, route, modelId, startTime, sess
     });
     // Detect if client disconnects before stream ends (potential cause of truncation)
     res.on('close', () => {
-        console.log("[CC Models] Anthropic SSE: client closed connection, deltaCount=" + deltaCount + " accumulatedText length=" + accumulatedText.length);
+        if (deltaCount > 0) console.log("[CC Models] Anthropic SSE: client closed, deltaCount=" + deltaCount + " textLen=" + accumulatedText.length);
     });
 }
 /**
