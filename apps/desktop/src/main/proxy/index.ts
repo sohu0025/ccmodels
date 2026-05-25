@@ -955,6 +955,45 @@ function anthropicToChat(json) {
     // { role, content } structure. Convert content blocks to plain text.
     if (Array.isArray(json.messages)) {
         for (const msg of json.messages) {
+            // Anthropic "assistant" messages may contain tool_use blocks → convert to OpenAI tool_calls
+            if (msg.role === 'assistant' && Array.isArray(msg.content)) {
+                const textParts = msg.content.filter((b) => b.type === 'text').map((b) => b.text);
+                const toolUseBlocks = msg.content.filter((b) => b.type === 'tool_use');
+                if (toolUseBlocks.length > 0) {
+                    const m = { role: 'assistant', content: textParts.join('\n') || null };
+                    m.tool_calls = toolUseBlocks.map((block, i) => ({
+                        index: i,
+                        id: block.id || `call_${i}`,
+                        type: 'function',
+                        function: {
+                            name: block.name,
+                            arguments: typeof block.input === 'string' ? block.input : JSON.stringify(block.input || {}),
+                        },
+                    }));
+                    messages.push(m);
+                } else if (textParts.length > 0) {
+                    messages.push({ role: 'assistant', content: textParts.join('\n') });
+                }
+                continue;
+            }
+            // Anthropic "user" messages may contain tool_result blocks → convert to OpenAI "tool" role
+            if (msg.role === 'user' && Array.isArray(msg.content)) {
+                const textParts = msg.content.filter((b) => b.type === 'text').map((b) => b.text);
+                const toolResults = msg.content.filter((b) => b.type === 'tool_result');
+                for (const tr of toolResults) {
+                    const trContent = typeof tr.content === 'string'
+                        ? tr.content
+                        : Array.isArray(tr.content)
+                            ? tr.content.map((b) => b.text || '').join('\n')
+                            : JSON.stringify(tr.content);
+                    messages.push({ role: 'tool', tool_call_id: tr.tool_use_id, content: trContent });
+                }
+                if (textParts.length > 0) {
+                    messages.push({ role: 'user', content: textParts.join('\n') });
+                }
+                continue;
+            }
+            // Normal text/content messages
             const m = { role: msg.role };
             if (typeof msg.content === 'string') {
                 m.content = msg.content;
@@ -966,20 +1005,27 @@ function anthropicToChat(json) {
                     if (block.type === 'image' || block.type === 'image_url') {
                         return { type: 'image_url', image_url: { url: block.source?.data || block.url || '' } };
                     }
-                    if (block.type === 'tool_use' || block.type === 'tool_result') {
-                        return { type: 'text', text: block.text || block.content || JSON.stringify(block) };
-                    }
                     // Unknown types: convert to text representation
                     const name = block.name || block.id || block.type || 'unknown';
                     return { type: 'text', text: block.text || `[${name}: ${JSON.stringify(block.input || block)}]` };
                 });
-                // Simplify single text block to plain string for Chat Completions compatibility
                 m.content = blocks.length === 1 && blocks[0].type === 'text' ? blocks[0].text : blocks;
             }
             messages.push(m);
         }
     }
     chat.messages = messages;
+    // Convert Anthropic tools format to OpenAI tools format
+    if (Array.isArray(json.tools)) {
+        chat.tools = json.tools.map((tool) => ({
+            type: 'function',
+            function: {
+                name: tool.name,
+                description: tool.description || '',
+                parameters: tool.input_schema,
+            },
+        }));
+    }
     return JSON.stringify(chat);
 }
 /**
@@ -1164,7 +1210,7 @@ function handleAnthropicSSEStream(proxyRes, res, route, modelId, startTime, sess
         });
         return;
     }
-    res.writeHead(proxyRes.statusCode ?? 200, {
+    res.writeHead(200, {
         'Content-Type': 'text/event-stream',
         'Cache-Control': 'no-cache',
         Connection: 'keep-alive',
@@ -1172,21 +1218,26 @@ function handleAnthropicSSEStream(proxyRes, res, route, modelId, startTime, sess
     const writeEvent = (event, data) => {
         res.write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`);
     };
+    let finishReason = null;
+    let deltaCount = 0;
+    let toolCallIndex = 0;
+    let toolCallAccumulated = {};
     proxyRes.on('data', (chunk) => {
         const raw = chunk.toString('utf-8');
         if (raw.length < 400) console.log("[CC Models] SSE raw chunk:", raw.slice(0, 300));
         buffer += raw;
         const lines = buffer.split('\n');
-        buffer = '';
+        // Keep the last (potentially incomplete) line in the buffer for next chunk
+        buffer = lines.pop() ?? '';
         for (const line of lines) {
-            if (!line.startsWith('data:'))
+            const trimmedLine = line.trim();
+            if (!trimmedLine.startsWith('data:'))
                 continue;
-            const payload = line.slice(5).trim();
+            const payload = trimmedLine.slice(5).trim();
             if (payload === '[DONE]')
                 continue;
             // Zhipu/BigModel may send progress events between content chunks
-            const trimmed = payload.trim();
-            if (trimmed === '') continue;
+            if (payload === '') continue;
             try {
                 const parsed = JSON.parse(payload);
                 // Capture usage if present (some providers include it mid-stream)
@@ -1202,6 +1253,7 @@ function handleAnthropicSSEStream(proxyRes, res, route, modelId, startTime, sess
                     continue;
                 if (!contentBlockStarted) {
                     contentBlockStarted = true;
+                    console.log("[CC Models] Anthropic SSE: sending message_start + content_block_start");
                     writeEvent('message_start', {
                         type: 'message_start',
                         message: {
@@ -1210,7 +1262,9 @@ function handleAnthropicSSEStream(proxyRes, res, route, modelId, startTime, sess
                             role: 'assistant',
                             content: [],
                             model: modelId,
-                            usage: { input_tokens: 0, output_tokens: 0 },
+                            stop_reason: null,
+                            stop_sequence: null,
+                            usage: { input_tokens: usage?.inputTokens ?? 0, output_tokens: 0 },
                         },
                     });
                     writeEvent('content_block_start', {
@@ -1221,11 +1275,48 @@ function handleAnthropicSSEStream(proxyRes, res, route, modelId, startTime, sess
                 }
                 if (delta.content) {
                     accumulatedText += delta.content;
+                    deltaCount++;
+                    if (deltaCount <= 3) {
+                        console.log("[CC Models] Anthropic SSE: content_block_delta #" + deltaCount + " text=" + delta.content.slice(0, 50));
+                    }
                     writeEvent('content_block_delta', {
                         type: 'content_block_delta',
                         index: 0,
                         delta: { type: 'text_delta', text: delta.content },
                     });
+                }
+                // Handle tool_calls from OpenAI-compatible providers
+                if (delta.tool_calls && Array.isArray(delta.tool_calls)) {
+                    for (const tc of delta.tool_calls) {
+                        const tcIdx = tc.index ?? 0;
+                        if (!toolCallAccumulated[tcIdx]) {
+                            toolCallAccumulated[tcIdx] = { id: tc.id, name: tc.function?.name, args: '' };
+                            if (tc.id && tc.function?.name) {
+                                // Close text block and start tool_use block
+                                writeEvent('content_block_stop', { type: 'content_block_stop', index: toolCallIndex });
+                                toolCallIndex++;
+                                writeEvent('content_block_start', {
+                                    type: 'content_block_start',
+                                    index: toolCallIndex,
+                                    content_block: { type: 'tool_use', id: tc.id, name: tc.function.name, input: {} },
+                                });
+                            }
+                        }
+                        if (tc.function?.arguments) {
+                            toolCallAccumulated[tcIdx].args += tc.function.arguments;
+                            if (toolCallAccumulated[tcIdx].id) {
+                                writeEvent('content_block_delta', {
+                                    type: 'content_block_delta',
+                                    index: toolCallIndex,
+                                    delta: { type: 'input_json_delta', partial_json: tc.function.arguments },
+                                });
+                            }
+                        }
+                    }
+                }
+                if (parsed.choices[0].finish_reason) {
+                    finishReason = parsed.choices[0].finish_reason;
+                    console.log("[CC Models] Anthropic SSE: finish_reason=" + finishReason);
                 }
             }
             catch {
@@ -1234,14 +1325,24 @@ function handleAnthropicSSEStream(proxyRes, res, route, modelId, startTime, sess
         }
     });
     proxyRes.on('end', () => {
+        console.log("[CC Models] Anthropic SSE: stream end, accumulatedText length=" + accumulatedText.length + ", deltaCount=" + deltaCount + ", finishReason=" + finishReason + ", writableEnded=" + res.writableEnded + ", toolCallIndex=" + toolCallIndex);
         if (contentBlockStarted) {
-            writeEvent('content_block_stop', { type: 'content_block_stop', index: 0 });
+            // Close all open content blocks (text block 0 + any tool_use blocks)
+            for (let i = 0; i <= toolCallIndex; i++) {
+                console.log("[CC Models] Anthropic SSE: sending content_block_stop for index " + i);
+                writeEvent('content_block_stop', { type: 'content_block_stop', index: i });
+            }
         }
         const outTokens = usage?.outputTokens ?? Math.max(1, Math.round(accumulatedText.length / 4));
         const inTokens = usage?.inputTokens ?? 0;
+        let stopReason = 'end_turn';
+        if (finishReason === 'stop') stopReason = 'end_turn';
+        else if (finishReason === 'length') stopReason = 'max_tokens';
+        else if (finishReason === 'tool_calls') stopReason = 'tool_use';
+        console.log("[CC Models] Anthropic SSE: sending message_delta + message_stop");
         writeEvent('message_delta', {
             type: 'message_delta',
-            delta: { stop_reason: 'end_turn', stop_sequence: null },
+            delta: { stop_reason: stopReason, stop_sequence: null },
             usage: { output_tokens: outTokens },
         });
         writeEvent('message_stop', { type: 'message_stop' });
@@ -1271,6 +1372,10 @@ function handleAnthropicSSEStream(proxyRes, res, route, modelId, startTime, sess
         console.error('[CC Models] Anthropic SSE stream error:', err.message);
         if (!res.writableEnded)
             res.end();
+    });
+    // Detect if client disconnects before stream ends (potential cause of truncation)
+    res.on('close', () => {
+        console.log("[CC Models] Anthropic SSE: client closed connection, deltaCount=" + deltaCount + " accumulatedText length=" + accumulatedText.length);
     });
 }
 /**
