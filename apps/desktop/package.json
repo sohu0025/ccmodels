@@ -1,6 +1,6 @@
 {
   "name": "@ccmodels/desktop",
-  "productName": "CC Models",
+  "productName": "ccmodels",
   "version": "0.1.0",
   "description": "CC Models - AI model proxy gateway and management tool",
   "homepage": "https://github.com/sohu0025/ccmodels",
