@@ -26,17 +26,17 @@ export function createSplashWindow(): void {
     transparent: true,
   });
 
-  const fileUrl = `file://${splashPath.replace(/\\/g, '/')}`;
+  const imageData = fs.readFileSync(splashPath).toString('base64');
   const html = `<!DOCTYPE html>
 <html>
 <head>
 <style>
-  html, body { margin:0; padding:0; width:100%; height:100%; overflow:hidden; }
-  body { display:flex; align-items:center; justify-content:center; background:transparent; }
+  html, body { margin:0; padding:0; width:100%; height:100%; overflow:hidden; background:#1a1a2e; }
+  body { display:flex; align-items:center; justify-content:center; }
   img { width:100%; height:100%; object-fit:contain; -webkit-user-drag:none; }
 </style>
 </head>
-<body><img src="${fileUrl}"></body>
+<body><img src="data:image/png;base64,${imageData}"></body>
 </html>`;
   splashWindow.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(html)}`);
   splashWindow.once('ready-to-show', () => splashWindow?.show());
