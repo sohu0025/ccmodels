@@ -160,6 +160,7 @@ function handleRequest(req: any, res: any, body: string, startTime: number): voi
         // Override model only if client's model isn't in provider's list
         let actualModelId = modelId;
         let omitModel = false;
+        let providerSupportsSystem = true;
         {
             const provider = getProviderById(route.providerId);
             if (provider) {
@@ -173,6 +174,9 @@ function handleRequest(req: any, res: any, body: string, startTime: number): voi
                     // so the provider uses its default model.
                     omitModel = true;
                 }
+                // DeepSeek and similar providers don't support the 'system' role in OpenAI format
+                providerSupportsSystem = !provider.name.toLowerCase().includes('deepseek') &&
+                    !provider.apiBase.toLowerCase().includes('deepseek');
             }
         }
         // Transform Codex Responses API request → Chat Completions API
@@ -184,7 +188,7 @@ function handleRequest(req: any, res: any, body: string, startTime: number): voi
                 const json = JSON.parse(body);
                 isResponsesApi = true;
                 isStreaming = !!json.stream;
-                json.messages = responsesToChatMessages(json);
+                json.messages = responsesToChatMessages(json, providerSupportsSystem);
                 delete json.input;
                 delete json.instructions;
                 if (json.max_output_tokens != null) {
@@ -226,7 +230,7 @@ function handleRequest(req: any, res: any, body: string, startTime: number): voi
                 try {
                     const json = JSON.parse(requestBody);
                     isStreaming = !!json.stream;
-                    requestBody = anthropicToChat(json);
+                    requestBody = anthropicToChat(json, providerSupportsSystem);
                 }
                 catch (e) {
                     console.error('[CC Models] Failed to transform Anthropic request:', e);
@@ -241,7 +245,7 @@ function handleRequest(req: any, res: any, body: string, startTime: number): voi
                 isStreaming = requestPath.includes('streamGenerateContent');
                 try {
                     const json = JSON.parse(requestBody);
-                    requestBody = googleToChat(json, actualModelId, isStreaming, omitModel);
+                    requestBody = googleToChat(json, actualModelId, isStreaming, omitModel, providerSupportsSystem);
                 }
                 catch (e) {
                     console.error('[CC Models] Failed to transform Google request:', e);
@@ -808,10 +812,11 @@ function extractModel(body, path) {
     return 'unknown';
 }
 /** Convert Responses API "input" field to Chat Completions "messages" array */
-function responsesToChatMessages(json) {
+function responsesToChatMessages(json, providerSupportsSystem = true) {
     const messages = [];
+    let systemContent = null;
     if (json.instructions && typeof json.instructions === 'string') {
-        messages.push({ role: 'system', content: json.instructions });
+        systemContent = json.instructions;
     }
     const input = json.input;
     // Normalize role: Responses API uses "developer" which maps to "system" in Chat Completions
@@ -839,7 +844,9 @@ function responsesToChatMessages(json) {
     };
     const asContentArray = (text) => [{ type: 'text', text }];
     if (typeof input === 'string') {
-        messages.push({ role: 'user', content: asContentArray(input) });
+        // If provider doesn't support system role, prepend system content to first user message
+        const userContent = (!providerSupportsSystem && systemContent) ? `${systemContent}\n\n${input}` : input;
+        messages.push({ role: 'user', content: asContentArray(userContent) });
     }
     else if (Array.isArray(input)) {
         for (const item of input) {
@@ -853,6 +860,12 @@ function responsesToChatMessages(json) {
                     // System role accepts string content; other roles need array format
                     if (role !== 'system' && typeof content === 'string') {
                         content = asContentArray(content);
+                    }
+                    // If provider doesn't support system role and this is the first user message, prepend system content
+                    if (!providerSupportsSystem && systemContent && role === 'user' && messages.length === 0) {
+                        const userText = typeof content === 'string' ? content : content.map((c) => c.text || '').join('\n');
+                        content = asContentArray(`${systemContent}\n\n${userText}`);
+                        systemContent = null;
                     }
                     messages.push({ role, content });
                 }
@@ -926,7 +939,7 @@ function chatResponseToResponses(body) {
  * Convert Anthropic Messages API request body to Chat Completions format.
  * Handles: system → prepended system message, content blocks → text, model/stream/etc passthrough.
  */
-function anthropicToChat(json) {
+function anthropicToChat(json, providerSupportsSystem = true) {
     const chat = {};
     chat.model = json.model;
     chat.stream = json.stream;
@@ -941,15 +954,18 @@ function anthropicToChat(json) {
     else if (json.stop_sequence)
         chat.stop = [json.stop_sequence];
     const messages = [];
-    // Anthropic system prompt is a top-level field → prepend as system message
+    // Anthropic system prompt is a top-level field → prepend as system message (if supported)
+    let systemText = null;
     if (json.system) {
-        const systemText = typeof json.system === 'string'
+        systemText = typeof json.system === 'string'
             ? json.system
             : Array.isArray(json.system)
                 ? json.system.filter((b) => b.type === 'text').map((b) => b.text).join('\n')
                 : '';
-        if (systemText)
+        if (systemText && providerSupportsSystem) {
             messages.push({ role: 'system', content: systemText });
+            systemText = null;
+        }
     }
     // Copy conversation messages — Anthropic and Chat Completions share the same
     // { role, content } structure. Convert content blocks to plain text.
@@ -1011,6 +1027,11 @@ function anthropicToChat(json) {
                 });
                 m.content = blocks.length === 1 && blocks[0].type === 'text' ? blocks[0].text : blocks;
             }
+            // If provider doesn't support system role and this is the first user message, prepend system content
+            if (!providerSupportsSystem && systemText && msg.role === 'user' && messages.length === 0 && typeof m.content === 'string') {
+                m.content = `${systemText}\n\n${m.content}`;
+                systemText = null;
+            }
             messages.push(m);
         }
     }
@@ -1032,22 +1053,25 @@ function anthropicToChat(json) {
  * Convert Google Gemini API request body to Chat Completions format.
  * Google format uses contents[] + parts[], system_instruction, and generationConfig.
  */
-function googleToChat(json, modelId, stream, omitModel) {
+function googleToChat(json, modelId, stream, omitModel, providerSupportsSystem = true) {
     const chat = {};
     if (!omitModel && modelId) {
         chat.model = modelId;
     }
     chat.stream = stream;
     const messages = [];
-    // Convert system_instruction → system message at the start
+    let systemText = null;
+    // Convert system_instruction → system message at the start (if supported)
     const sysInstr = json.system_instruction;
     if (sysInstr?.parts && Array.isArray(sysInstr.parts)) {
-        const systemText = sysInstr.parts
+        systemText = sysInstr.parts
             .filter((p) => p.text)
             .map((p) => p.text)
             .join('\n');
-        if (systemText)
+        if (systemText && providerSupportsSystem) {
             messages.push({ role: 'system', content: systemText });
+            systemText = null;
+        }
     }
     // Convert contents[] → messages[]
     // Google roles: "user", "model" → OpenAI roles: "user", "assistant"
@@ -1060,6 +1084,11 @@ function googleToChat(json, modelId, stream, omitModel) {
             if (Array.isArray(parts)) {
                 const texts = parts.filter((p) => p.text).map((p) => p.text);
                 content = texts.join('\n');
+            }
+            // If provider doesn't support system role and this is the first user message, prepend system content
+            if (!providerSupportsSystem && systemText && role === 'user' && messages.length === 0 && content) {
+                content = `${systemText}\n\n${content}`;
+                systemText = null;
             }
             messages.push({ role, content });
         }
