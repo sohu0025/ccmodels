@@ -478,8 +478,14 @@ function handleRequest(req: any, res: any, body: string, startTime: number): voi
                 res.end(JSON.stringify({ error: 'Gateway timeout' }));
             }
         });
-        if (requestBody) {
-            proxyReq.write(requestBody);
+        // Filter request body for DeepSeek compatibility before sending
+        let finalRequestBody = requestBody;
+        const provider = getProviderById(route.providerId);
+        if (provider && (provider.name.toLowerCase().includes('deepseek') || provider.apiBase.toLowerCase().includes('deepseek'))) {
+            finalRequestBody = filterRequestForDeepSeek(requestBody || '');
+        }
+        if (finalRequestBody) {
+            proxyReq.write(finalRequestBody);
         }
         proxyReq.end();
     }
@@ -489,6 +495,29 @@ function handleRequest(req: any, res: any, body: string, startTime: number): voi
             res.writeHead(500, { 'Content-Type': 'application/json' });
             res.end(JSON.stringify({ error: 'Internal proxy error', message: err.message }));
         }
+    }
+}
+/**
+ * Filter request body for DeepSeek compatibility
+ * DeepSeek doesn't support some OpenAI fields like top_k, presence_penalty, etc.
+ */
+function filterRequestForDeepSeek(body) {
+    try {
+        const json = JSON.parse(body);
+        // Remove unsupported fields
+        delete json.top_k;
+        delete json.presence_penalty;
+        delete json.frequency_penalty;
+        // DeepSeek only supports certain parameter values
+        if (json.top_p != null && json.top_p < 0 || json.top_p > 1) {
+            delete json.top_p;
+        }
+        if (json.temperature != null && (json.temperature < 0 || json.temperature > 2)) {
+            delete json.temperature;
+        }
+        return JSON.stringify(json);
+    } catch {
+        return body;
     }
 }
 export function stopProxy() {
